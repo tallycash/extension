@@ -9,12 +9,13 @@ import SharedAssetIcon from "./SharedAssetIcon"
 interface SelectAssetMenuContentProps {
   assets: Asset[]
   setSelectedAssetAndClose: (asset: Asset) => void
+  filterAssets?: (value: string) => void
 }
 
 function SelectAssetMenuContent(
   props: SelectAssetMenuContentProps
 ): ReactElement {
-  const { setSelectedAssetAndClose, assets } = props
+  const { setSelectedAssetAndClose, assets, filterAssets } = props
 
   return (
     <>
@@ -24,17 +25,22 @@ function SelectAssetMenuContent(
           <input
             type="text"
             className="search_input"
-            placeholder="Search by name or address"
+            placeholder="Search by name"
+            onChange={(e) => {
+              if (filterAssets) {
+                filterAssets(e.target.value)
+              }
+            }}
           />
           <span className="icon_search" />
         </div>
       </div>
       <div className="divider" />
       <ul>
-        {assets.map((asset) => {
+        {assets.map((asset, i) => {
           return (
             <SharedAssetItem
-              key={asset.metadata?.coinGeckoID || asset.symbol}
+              key={i}
               asset={asset}
               onClick={setSelectedAssetAndClose}
             />
@@ -134,7 +140,9 @@ interface SharedAssetInputProps {
   assets: Asset[]
   label: string
   defaultAsset: Asset
+  controlledAsset?: Asset
   amount: string
+  footer?: string
   maxBalance: number
   isAssetOptionsLocked: boolean
   disableDropdown: boolean
@@ -158,10 +166,22 @@ export default function SharedAssetInput(
     onAssetSelect,
     onAmountChange,
     onSendToAddressChange,
+    controlledAsset,
   } = props
 
   const [openAssetMenu, setOpenAssetMenu] = useState(false)
   const [selectedAsset, setSelectedAsset] = useState(defaultAsset)
+  const [filteredAssets, setFilteredAssets] = useState(assets)
+
+  React.useEffect(() => {
+    setFilteredAssets(assets)
+  }, [assets])
+
+  useEffect(() => {
+    if (controlledAsset) {
+      setSelectedAsset(controlledAsset)
+    }
+  }, [controlledAsset])
 
   // TODO: Refactor this to track state in a more reasonable way
   useEffect(() => {
@@ -200,11 +220,20 @@ export default function SharedAssetInput(
           setOpenAssetMenu(false)
         }}
       >
-        {assets && (
+        {assets ? (
           <SelectAssetMenuContent
-            assets={assets}
+            assets={filteredAssets}
+            filterAssets={(value) => {
+              setFilteredAssets(
+                assets.filter((asset) =>
+                  asset.symbol.toUpperCase().includes(value.toUpperCase())
+                )
+              )
+            }}
             setSelectedAssetAndClose={setSelectedAssetAndClose}
           />
+        ) : (
+          <></>
         )}
       </SharedSlideUpMenu>
       <div className="asset_wrap standard_width">
@@ -255,12 +284,25 @@ export default function SharedAssetInput(
             />
           </>
         )}
-        <div className="error_message">{getErrorMessage(amount)}</div>
+
+        <div className={getErrorMessage(amount) ? "error_message" : "footer"}>
+          {getErrorMessage(amount) || props.footer}
+        </div>
       </div>
       <style jsx>
         {`
           .asset_wrap {
             height: 72px;
+            border-radius: 4px;
+            background-color: var(--green-95);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0px 16px;
+            box-sizing: border-box;
+          }
+          .asset_input {
+            height: 62px;
             border-radius: 4px;
             background-color: var(--green-95);
             display: flex;
@@ -335,6 +377,20 @@ export default function SharedAssetInput(
           .disable_click {
             pointer-events: none;
           }
+          .footer {
+            color: var(--green-40);
+            position: fixed;
+            font-weight: 500;
+            font-size: 14px;
+            line-height: 20px;
+            transform: translateY(-3px);
+            align-self: flex-end;
+            text-align: end;
+            width: 150px;
+            background-color: var(--green-95);
+            margin-left: 172px;
+            z-index: 1;
+          }
         `}
       </style>
     </label>
@@ -349,6 +405,7 @@ SharedAssetInput.defaultProps = {
   defaultAsset: { symbol: "", name: "" },
   label: "",
   amount: "0.0",
+  footer: "",
   maxBalance: 0,
   onAssetSelect: () => {
     // do nothing by default

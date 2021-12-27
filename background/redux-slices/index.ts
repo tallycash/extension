@@ -5,6 +5,7 @@ import assetsReducer from "./assets"
 import activitiesReducer from "./activities"
 import keyringsReducer from "./keyrings"
 import swapReducer from "./0x-swap"
+import limitReducer from "./limit-orders"
 import transactionConstructionReducer from "./transaction-construction"
 import uiReducer from "./ui"
 import dappPermissionReducer from "./dapp-permission"
@@ -18,6 +19,7 @@ const mainReducer = combineReducers({
   transactionConstruction: transactionConstructionReducer,
   ui: uiReducer,
   dappPermission: dappPermissionReducer,
+  limit: limitReducer,
 })
 
 export default mainReducer

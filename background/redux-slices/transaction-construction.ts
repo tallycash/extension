@@ -6,6 +6,7 @@ import {
   MAX_FEE_MULTIPLIER,
   REGULAR,
 } from "../constants/networkFees"
+import logger from "../lib/logger"
 
 import {
   BlockEstimate,
@@ -14,6 +15,8 @@ import {
   SignedEVMTransaction,
 } from "../networks"
 import { createBackgroundAsyncThunk } from "./utils"
+
+import { BaseLimitOrder } from "../lib/keeper-dao"
 
 const enum TransactionConstructionStatus {
   Idle = "idle",
@@ -59,6 +62,7 @@ export type Events = {
   requestSignature: EIP1559TransactionRequest
   signatureRejected: never
   broadcastSignedTransaction: SignedEVMTransaction
+  signAndSendLimitOrder: BaseLimitOrder
 }
 
 export const emitter = new Emittery<Events>()
@@ -82,6 +86,15 @@ export const broadcastSignedTransaction = createBackgroundAsyncThunk(
   "transaction-construction/broadcast",
   async (transaction: SignedEVMTransaction) => {
     await emitter.emit("broadcastSignedTransaction", transaction)
+  }
+)
+
+export const signAndSendLimitOrder = createBackgroundAsyncThunk(
+  "transaction-construction/signLimitOrder",
+  async (transaction: BaseLimitOrder) => {
+    console.log("requesting limit order")
+    logger.log("Requesting Limit Order")
+    await emitter.emit("signAndSendLimitOrder", transaction)
   }
 )
 

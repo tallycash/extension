@@ -18,10 +18,15 @@ import SwapQoute from "../components/Swap/SwapQuote"
 import SharedActivityHeader from "../components/Shared/SharedActivityHeader"
 import SwapTransactionSettings from "../components/Swap/SwapTransactionSettings"
 import { useBackgroundDispatch, useBackgroundSelector } from "../hooks"
+import Limit from "./Limit"
 
 export default function Swap(): ReactElement {
   const dispatch = useBackgroundDispatch()
   const [confirmationMenu, setConfirmationMenu] = useState(false)
+  const [openTokenMenu, setOpenTokenMenu] = useState(false)
+  const [activeActivity, setActiveActivity] = useState<"swap" | "limit">(
+    "limit"
+  )
 
   const { sellAsset, buyAsset, sellAmount, buyAmount, quote } =
     useBackgroundSelector((state) => state.swap)
@@ -156,43 +161,71 @@ export default function Swap(): ReactElement {
           <SwapQoute />
         </SharedSlideUpMenu>
         <div className="standard_width">
-          <SharedActivityHeader label="Swap Assets" activity="swap" />
-          <div className="form">
-            <div className="form_input">
-              <SharedAssetInput
-                assets={sellAssets}
-                defaultAsset={sellAsset}
-                onAssetSelect={fromAssetSelected}
-                onAmountChange={fromAmountChanged}
-                amount={sellAmount}
-                label="Swap from:"
+          <div
+            style={{
+              marginBottom: "-23px",
+              marginTop: "-20px",
+              display: "flex",
+              justifyContent: "flex-start",
+            }}
+          >
+            <span onClick={() => setActiveActivity("swap")}>
+              <SharedActivityHeader
+                inactive={activeActivity !== "swap"}
+                label="Swap Assets"
+                activity="swap"
               />
-            </div>
-            <div className="icon_change" />
-            <div className="form_input">
-              <SharedAssetInput
-                assets={buyAssets}
-                defaultAsset={buyAsset}
-                onAssetSelect={toAssetSelected}
-                onAmountChange={toAmountChanged}
-                amount={buyAmount}
-                label="Swap to:"
+            </span>
+            <span className="activity_separator"> - </span>
+            <span onClick={() => setActiveActivity("limit")}>
+              <SharedActivityHeader
+                inactive={activeActivity !== "limit"}
+                label="Limit Order"
+                activity="limit"
               />
-            </div>
-            <div className="settings_wrap">
-              <SwapTransactionSettings />
-            </div>
-            <div className="footer standard_width_padded">
-              <SharedButton
-                type="primary"
-                size="large"
-                isDisabled={!sellAsset || !buyAsset}
-                onClick={getQuote}
-              >
-                Get final quote
-              </SharedButton>
-            </div>
+            </span>
           </div>
+          {activeActivity === "swap" ? (
+            <div className="form">
+              <div className="form_input">
+                <SharedAssetInput
+                  assets={sellAssets}
+                  defaultAsset={sellAsset}
+                  onAssetSelect={fromAssetSelected}
+                  onAmountChange={fromAmountChanged}
+                  amount={sellAmount}
+                  label="Swap from:"
+                />
+              </div>
+              <div className="icon_change" />
+              <div className="form_input">
+                <SharedAssetInput
+                  assets={buyAssets}
+                  defaultAsset={buyAsset}
+                  onAssetSelect={toAssetSelected}
+                  onAmountChange={toAmountChanged}
+                  amount={buyAmount}
+                  label="Swap to:"
+                />
+              </div>
+              <div className="settings_wrap">
+                <SwapTransactionSettings />
+              </div>
+              <div className="footer standard_width_padded">
+                <SharedButton
+                  type="primary"
+                  size="large"
+                  isDisabled={!sellAsset || !buyAsset}
+                  onClick={getQuote}
+                >
+                  Get final quote
+                </SharedButton>
+              </div>
+            </div>
+          ) : (
+            <></>
+          )}
+          {activeActivity === "limit" ? <Limit /> : <></>}
         </div>
       </CorePage>
       <style jsx>

@@ -59,6 +59,9 @@ import {
   emitter as providerBridgeSliceEmitter,
   initializeAllowedPages,
 } from "./redux-slices/dapp-permission"
+import logger from "./lib/logger"
+import axios from "axios"
+import { BaseLimitOrder, sendKeeperDaoLimitOrder } from "./lib/keeper-dao"
 
 // This sanitizer runs on store and action data before serializing for remote
 // redux devtools. The goal is to end up with an object that is directly
@@ -385,6 +388,23 @@ export default class Main extends BaseService<never> {
           transaction
         )
         this.store.dispatch(signed(signedTx))
+      }
+    )
+
+    transactionConstructionSliceEmitter.on(
+      "signAndSendLimitOrder",
+      async (transaction: BaseLimitOrder) => {
+        logger.log("Got Limit Order Request!")
+        try {
+          const keeperDaoResponse = await sendKeeperDaoLimitOrder(
+            transaction,
+            this.keyringService
+          )
+          logger.log("Limit Order Posted Successfully!", keeperDaoResponse)
+        } catch (e) {
+          logger.error(e)
+          throw e
+        }
       }
     )
 

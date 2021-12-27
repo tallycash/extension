@@ -25,3 +25,9 @@ export const DAY = 24 * HOUR
 
 export * from "./currencies"
 export * from "./networks"
+
+export const ZEROEX_DOMAIN_DEFAULTS = {
+  name: "ZeroEx",
+  version: "1.0.0",
+  chainId: 1,
+}
