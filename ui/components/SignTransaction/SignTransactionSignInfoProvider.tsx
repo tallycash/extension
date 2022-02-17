@@ -8,6 +8,7 @@ import {
   enrichAssetAmountWithDecimalValues,
   enrichAssetAmountWithMainCurrencyValues,
 } from "@tallyho/tally-background/redux-slices/utils/asset-utils"
+import { TransactionAnnotation } from "@tallyho/tally-background/services/enrichment"
 import React, { ReactElement } from "react"
 import { useBackgroundSelector } from "../../hooks"
 import TransactionDetailAddressValue from "../TransactionDetail/TransactionDetailAddressValue"
@@ -32,6 +33,11 @@ export default function SignTransactionSignInfoProvider({
     },
     4
   )
+
+  let annotation: TransactionAnnotation | undefined
+  if ("annotation" in transactionDetails) {
+    annotation = transactionDetails.annotation
+  }
 
   const completeTransactionAssetAmount:
     | (AnyAssetAmount & AssetDecimalAmount)
@@ -70,7 +76,8 @@ export default function SignTransactionSignInfoProvider({
             <div className="spend_amount_label">Spend Amount</div>
             <div className="spend_amount">
               <div className="eth_value">
-                {completeTransactionAssetAmount.localizedDecimalAmount}
+                {(annotation && (annotation as any).assetAmount) ??
+                  completeTransactionAssetAmount.localizedDecimalAmount}
               </div>
               <div className="main_currency_value">
                 {"localizedMainCurrencyAmount" in

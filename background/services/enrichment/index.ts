@@ -22,6 +22,7 @@ import ChainService from "../chain"
 import IndexingService from "../indexing"
 import { ServiceCreatorFunction, ServiceLifecycleEvents } from "../types"
 import BaseService from "../base"
+import { parseUniswapTx } from "../../lib/uniswap"
 
 export type BaseTransactionAnnotation = {
   // a URL to an image representing the transaction interaction, if applicable.
@@ -37,6 +38,7 @@ export type ContractDeployment = BaseTransactionAnnotation & {
 
 export type ContractInteraction = BaseTransactionAnnotation & {
   type: "contract-interaction"
+  assetAmount?: string // @TODO properly type
 }
 
 export type AssetApproval = BaseTransactionAnnotation & {
@@ -250,6 +252,21 @@ export default class EnrichmentService extends BaseService<Events> {
         }
       } else {
         // Fall back on a standard contract interaction.
+
+        // If we are interacting with Uniswap
+        if (transaction.to === "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45") {
+          const uniswapTx = await parseUniswapTx(transaction.input)
+
+          if (uniswapTx) {
+            txAnnotation = {
+              type: "contract-interaction",
+              timestamp: Date.now(),
+              transactionLogoURL,
+              assetAmount: uniswapTx.amount,
+            }
+            return txAnnotation
+          }
+        }
         txAnnotation = {
           timestamp: Date.now(),
           type: "contract-interaction",
