@@ -8,6 +8,15 @@ export function normalizeEVMAddress(address: string | Buffer): HexString {
   return normalizeHexAddress(address)
 }
 
+export function normalizeEVMAddressList(addresses: string[]): HexString[] {
+  return addresses.map((addr) => normalizeEVMAddress(addr))
+}
+
+export function convertToHexAndNormalize(hexableValue: number): HexString {
+  const hexString = utils.hexValue(hexableValue)
+  return normalizeEVMAddress(hexString)
+}
+
 export function truncateDecimalAmount(
   value: number | string,
   decimalLength: number
@@ -35,7 +44,7 @@ export function sameEVMAddress(
   ) {
     return false
   }
-  return normalizeHexAddress(address1) === normalizeHexAddress(address2)
+  return normalizeEVMAddress(address1) === normalizeEVMAddress(address2)
 }
 
 export function gweiToWei(value: number | bigint): bigint {

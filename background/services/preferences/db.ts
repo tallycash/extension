@@ -4,6 +4,7 @@ import { FiatCurrency } from "../../assets"
 import { AddressOnNetwork } from "../../accounts"
 
 import DEFAULT_PREFERENCES from "./defaults"
+import { normalizeEVMAddress } from "../../lib/utils"
 
 // The idea is to use this interface to describe the data structure stored in indexedDb
 // In the future this might also have a runtime type check capability, but it's good enough for now.
@@ -74,7 +75,7 @@ export class PreferenceDatabase extends Dexie {
               // eslint-disable-next-line no-param-reassign
               storedPreferences.selectedAccount = {
                 network: DEFAULT_PREFERENCES.selectedAccount.network,
-                address: storedPreferences.currentAddress,
+                address: normalizeEVMAddress(storedPreferences.currentAddress),
               }
             } else {
               // eslint-disable-next-line no-param-reassign

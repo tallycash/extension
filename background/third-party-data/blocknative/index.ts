@@ -3,7 +3,7 @@ import BlocknativeSdk from "bnc-sdk"
 
 import { BlockPrices, BlockEstimate } from "../../networks"
 import { EthereumTransactionData } from "./types"
-import { gweiToWei } from "../../lib/utils"
+import { gweiToWei, normalizeEVMAddress, sameEVMAddress } from "../../lib/utils"
 import { ETHEREUM } from "../../constants/networks"
 
 const BLOCKNATIVE_API_ROOT = "https://api.blocknative.com"
@@ -54,7 +54,7 @@ export default class Blocknative {
   ): void {
     // TODO Centralize handling of txConfirmed.
     this.blocknative
-      .account(accountAddress)
+      .account(normalizeEVMAddress(accountAddress))
       .emitter.on("txConfirmed", (transactionData) => {
         if (
           "system" in transactionData &&
@@ -63,7 +63,7 @@ export default class Blocknative {
           const transaction = transactionData as EthereumTransactionData
 
           const balanceDelta = transaction.netBalanceChanges
-            ?.filter(({ address }) => address.toLowerCase() === accountAddress)
+            ?.filter(({ address }) => sameEVMAddress(address, accountAddress))
             .flatMap(({ balanceChanges }) => balanceChanges)
             .filter(({ asset: { type: assetType } }) => assetType === "ether")
             .reduce(
@@ -83,8 +83,10 @@ export default class Blocknative {
   unwatchBalanceUpdatesFor(accountAddress: string): void {
     // TODO After centralizing handling, handle overall unsubscribing through
     // that mechanism.
-    this.blocknative.account(accountAddress).emitter.off("txConfirmed")
-    this.blocknative.unsubscribe(accountAddress)
+    this.blocknative
+      .account(normalizeEVMAddress(accountAddress))
+      .emitter.off("txConfirmed")
+    this.blocknative.unsubscribe(normalizeEVMAddress(accountAddress))
   }
 
   /*

@@ -15,6 +15,7 @@ import {
   ConfirmedEVMTransaction,
 } from "../../networks"
 import { FungibleAsset } from "../../assets"
+import { normalizeEVMAddress } from "../../lib/utils"
 
 /**
  * Parse a block as returned by a polling provider.
@@ -24,9 +25,9 @@ export function blockFromEthersBlock(
   gethResult: EthersBlock
 ): AnyEVMBlock {
   return {
-    hash: gethResult.hash,
+    hash: normalizeEVMAddress(gethResult.hash),
     blockHeight: gethResult.number,
-    parentHash: gethResult.parentHash,
+    parentHash: normalizeEVMAddress(gethResult.parentHash),
     // FIXME Hold for ethers/v5.4.8 _difficulty BigNumber field; the current
     // FIXME difficutly field is a `number` and has overflowed since Ethereum
     // FIXME difficulty has exceeded MAX_SAFE_INTEGER. The current ethers
@@ -57,9 +58,9 @@ export function blockFromWebsocketBlock(
   }
 
   return {
-    hash: gethResult.hash,
+    hash: normalizeEVMAddress(gethResult.hash),
     blockHeight: BigNumber.from(gethResult.number).toNumber(),
-    parentHash: gethResult.parentHash,
+    parentHash: normalizeEVMAddress(gethResult.parentHash),
     difficulty: BigInt(gethResult.difficulty),
     timestamp: BigNumber.from(gethResult.timestamp).toNumber(),
     baseFeePerGas: gethResult.baseFeePerGas
@@ -73,9 +74,15 @@ export function ethersTransactionRequestFromEIP1559TransactionRequest(
   transaction: EIP1559TransactionRequest
 ): EthersTransactionRequest {
   return {
-    to: transaction.to,
+    to:
+      transaction.to != null
+        ? normalizeEVMAddress(transaction.to)
+        : transaction.to,
     data: transaction.input ?? undefined,
-    from: transaction.from,
+    from:
+      transaction.from != null
+        ? normalizeEVMAddress(transaction.from)
+        : transaction.from,
     type: transaction.type,
     nonce: transaction.nonce,
     value: transaction.value,
@@ -91,9 +98,15 @@ export function eip1559TransactionRequestFromEthersTransactionRequest(
 ): Partial<EIP1559TransactionRequest> {
   // TODO What to do if transaction is not EIP1559?
   return {
-    to: transaction.to,
+    to:
+      transaction.to != null
+        ? normalizeEVMAddress(transaction.to)
+        : transaction.to,
     input: transaction.data?.toString() ?? null,
-    from: transaction.from,
+    from:
+      transaction.from != null
+        ? normalizeEVMAddress(transaction.from)
+        : transaction.from,
     type: transaction.type as 1 | 2,
     nonce:
       typeof transaction.nonce !== "undefined"
@@ -128,8 +141,8 @@ export function ethersTransactionFromSignedTransaction(
     maxPriorityFeePerGas: tx.maxPriorityFeePerGas
       ? BigNumber.from(tx.maxPriorityFeePerGas)
       : undefined,
-    to: tx.to,
-    from: tx.from,
+    to: tx.to != null ? normalizeEVMAddress(tx.to) : tx.to,
+    from: tx.from != null ? normalizeEVMAddress(tx.from) : tx.from,
     data: tx.input || "",
     type: tx.type,
     chainId: parseInt(tx.network.chainID, 10),
@@ -168,7 +181,7 @@ export function enrichTransactionWithReceipt(
       // Pre-Byzantium transactions require a guesswork approach or an
       // eth_call; we go for guesswork.
       (gasUsed === transaction.gasLimit ? 0 : 1),
-    blockHash: receipt.blockHash,
+    blockHash: normalizeEVMAddress(receipt.blockHash),
     blockHeight: receipt.blockNumber,
   }
 }
@@ -194,9 +207,9 @@ export function transactionFromEthersTransaction(
   }
 
   const newTx = {
-    hash: tx.hash,
-    from: tx.from,
-    to: tx.to,
+    hash: tx.hash != null ? normalizeEVMAddress(tx.hash) : tx.hash,
+    from: tx.from != null ? normalizeEVMAddress(tx.from) : tx.from,
+    to: tx.to != null ? normalizeEVMAddress(tx.to) : tx.to,
     nonce: parseInt(tx.nonce.toString(), 10),
     gasLimit: tx.gasLimit.toBigInt(),
     gasPrice: tx.gasPrice ? tx.gasPrice.toBigInt() : null,
@@ -207,7 +220,7 @@ export function transactionFromEthersTransaction(
     value: tx.value.toBigInt(),
     input: tx.data,
     type: tx.type,
-    blockHash: tx.blockHash || null,
+    blockHash: tx.blockHash != null ? normalizeEVMAddress(tx.blockHash) : null,
     blockHeight: tx.blockNumber || null,
     network,
     asset,

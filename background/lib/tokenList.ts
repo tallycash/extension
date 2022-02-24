@@ -59,7 +59,7 @@ function tokenListToFungibleAssetsForNetwork(
         symbol: tokenMetadata.symbol,
         decimals: tokenMetadata.decimals,
         homeNetwork: network,
-        contractAddress: tokenMetadata.address,
+        contractAddress: normalizeEVMAddress(tokenMetadata.address),
       }
     })
 }

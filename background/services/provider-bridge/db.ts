@@ -1,5 +1,6 @@
 import { PermissionRequest } from "@tallyho/provider-bridge-shared"
 import Dexie from "dexie"
+import { normalizeEVMAddress } from "../../lib/utils"
 
 function keyBy(
   permissionsArray: Array<PermissionRequest>,
@@ -83,14 +84,19 @@ export class ProviderBridgeServiceDatabase extends Dexie {
   }
 
   async deletePermission(origin: string, accountAddress: string) {
-    return this.dAppPermissions.where({ origin, accountAddress }).delete()
+    return this.dAppPermissions
+      .where({ origin, accountAddress: normalizeEVMAddress(accountAddress) })
+      .delete()
   }
 
   async checkPermission(
     origin: string,
     accountAddress: string
   ): Promise<PermissionRequest | undefined> {
-    return this.dAppPermissions.get({ origin, accountAddress })
+    return this.dAppPermissions.get({
+      origin,
+      accountAddress: normalizeEVMAddress(accountAddress),
+    })
   }
 }
 

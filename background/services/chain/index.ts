@@ -1,53 +1,54 @@
+import { getNetwork } from "@ethersproject/networks"
 import {
   AlchemyProvider,
   AlchemyWebSocketProvider,
   TransactionReceipt,
 } from "@ethersproject/providers"
-import { getNetwork } from "@ethersproject/networks"
 import { utils } from "ethers"
 import { Logger } from "ethers/lib/utils"
-import logger from "../../lib/logger"
-import getBlockPrices from "../../lib/gas"
-import { HexString, UNIXTime } from "../../types"
-import { AccountBalance, AddressOnNetwork } from "../../accounts"
-import {
-  AnyEVMBlock,
-  AnyEVMTransaction,
-  EIP1559TransactionRequest,
-  EVMNetwork,
-  Network,
-  SignedEVMTransaction,
-  BlockPrices,
-  LegacyEVMTransactionRequest,
-} from "../../networks"
+
 import { AssetTransfer } from "../../assets"
+import { HOUR } from "../../constants"
+import { ETH } from "../../constants/currencies"
 import {
   getAssetTransfers,
   transactionFromAlchemyWebsocketTransaction,
 } from "../../lib/alchemy"
-import { ETH } from "../../constants/currencies"
-import PreferenceService from "../preferences"
-import { ServiceCreatorFunction, ServiceLifecycleEvents } from "../types"
-import { getOrCreateDB, ChainDatabase } from "./db"
-import BaseService from "../base"
-import {
-  blockFromEthersBlock,
-  blockFromWebsocketBlock,
-  enrichTransactionWithReceipt,
-  ethersTransactionRequestFromEIP1559TransactionRequest,
-  ethersTransactionFromSignedTransaction,
-  transactionFromEthersTransaction,
-} from "./utils"
 import {
   getEthereumNetwork,
   normalizeEVMAddress,
   sameEVMAddress,
 } from "../../lib/utils"
+import logger from "../../lib/logger"
+import getBlockPrices from "../../lib/gas"
+import { AccountBalance, AddressOnNetwork } from "../../accounts"
+import {
+  AnyEVMBlock,
+  AnyEVMTransaction,
+  BlockPrices,
+  EIP1559TransactionRequest,
+  EVMNetwork,
+  LegacyEVMTransactionRequest,
+  Network,
+  SignedEVMTransaction,
+} from "../../networks"
+import { HexString, UNIXTime } from "../../types"
+import BaseService from "../base"
 import type {
   EnrichedEIP1559TransactionRequest,
   EnrichedEVMTransactionSignatureRequest,
 } from "../enrichment"
-import { HOUR } from "../../constants"
+import PreferenceService from "../preferences"
+import { ServiceCreatorFunction, ServiceLifecycleEvents } from "../types"
+import { ChainDatabase, getOrCreateDB } from "./db"
+import {
+  blockFromEthersBlock,
+  blockFromWebsocketBlock,
+  enrichTransactionWithReceipt,
+  ethersTransactionFromSignedTransaction,
+  ethersTransactionRequestFromEIP1559TransactionRequest,
+  transactionFromEthersTransaction,
+} from "./utils"
 
 // We can't use destructuring because webpack has to replace all instances of
 // `process.env` variables in the bundled output
@@ -247,10 +248,15 @@ export default class ChainService extends BaseService<Events> {
             .getNetworkPendingTransactions(network)
             .then((pendingTransactions) => {
               pendingTransactions.forEach(({ hash, firstSeen }) => {
+                const normalizedHash = normalizeEVMAddress(hash)
                 logger.debug(
-                  `Queuing pending transaction ${hash} for status lookup.`
+                  `Queuing pending transaction ${normalizedHash} for status lookup.`
                 )
-                this.queueTransactionHashToRetrieve(network, hash, firstSeen)
+                this.queueTransactionHashToRetrieve(
+                  network,
+                  normalizedHash,
+                  firstSeen
+                )
               })
             })
         )
@@ -275,8 +281,11 @@ export default class ChainService extends BaseService<Events> {
   }> {
     // Basic transaction construction based on the provided options, with extra data from the chain service
     const transactionRequest: EnrichedEIP1559TransactionRequest = {
-      from: partialRequest.from,
-      to: partialRequest.to,
+      from: normalizeEVMAddress(partialRequest.from),
+      to:
+        partialRequest.to != null
+          ? normalizeEVMAddress(partialRequest.to)
+          : partialRequest.to,
       value: partialRequest.value ?? 0n,
       gasLimit: partialRequest.gasLimit ?? 0n,
       maxFeePerGas: partialRequest.maxFeePerGas ?? 0n,
@@ -351,7 +360,7 @@ export default class ChainService extends BaseService<Events> {
 
     const chainNonce =
       (await this.pollingProviders.ethereum.getTransactionCount(
-        transactionRequest.from,
+        normalizeEVMAddress(transactionRequest.from),
         "latest"
       )) - 1
     const existingNonce =
@@ -447,10 +456,10 @@ export default class ChainService extends BaseService<Events> {
 
     // TODO look up provider network properly
     const balance = await this.pollingProviders.ethereum.getBalance(
-      addressNetwork.address
+      normalizeEVMAddress(addressNetwork.address)
     )
     const accountBalance: AccountBalance = {
-      address: addressNetwork.address,
+      address: normalizeEVMAddress(addressNetwork.address),
       assetAmount: {
         asset: ETH,
         amount: balance.toBigInt(),
@@ -494,14 +503,17 @@ export default class ChainService extends BaseService<Events> {
     network: EVMNetwork,
     blockHash: string
   ): Promise<AnyEVMBlock> {
+    const normalizedHash = normalizeEVMAddress(blockHash)
     // TODO make this multi network
-    const cachedBlock = await this.db.getBlock(network, blockHash)
+    const cachedBlock = await this.db.getBlock(network, normalizedHash)
     if (cachedBlock) {
       return cachedBlock
     }
 
     // Looking for new block
-    const resultBlock = await this.pollingProviders.ethereum.getBlock(blockHash)
+    const resultBlock = await this.pollingProviders.ethereum.getBlock(
+      normalizedHash
+    )
 
     const block = blockFromEthersBlock(network, resultBlock)
 
@@ -802,7 +814,7 @@ export default class ChainService extends BaseService<Events> {
     assetTransfers.forEach((a) =>
       this.queueTransactionHashToRetrieve(
         addressOnNetwork.network,
-        a.txHash,
+        normalizeEVMAddress(a.txHash),
         firstSeen
       )
     )
@@ -830,9 +842,12 @@ export default class ChainService extends BaseService<Events> {
     const network = this.ethereumNetwork
 
     toHandle.forEach(async ({ hash, firstSeen }) => {
+      const normalizedHash = normalizeEVMAddress(hash)
       try {
         // TODO make this multi network
-        const result = await this.pollingProviders.ethereum.getTransaction(hash)
+        const result = await this.pollingProviders.ethereum.getTransaction(
+          normalizedHash
+        )
 
         const transaction = transactionFromEthersTransaction(
           result,
@@ -850,35 +865,44 @@ export default class ChainService extends BaseService<Events> {
           )
         } else if (transaction.blockHash) {
           // Get relevant block data.
-          await this.getBlockData(transaction.network, transaction.blockHash)
+          await this.getBlockData(
+            transaction.network,
+            normalizeEVMAddress(transaction.blockHash)
+          )
           // Retrieve gas used, status, etc
           this.retrieveTransactionReceipt(transaction.network, transaction)
         }
       } catch (error) {
         logger.error(`Error retrieving transaction ${hash}`, error)
         if (Date.now() <= firstSeen + TRANSACTION_CHECK_LIFETIME_MS) {
-          this.queueTransactionHashToRetrieve(network, hash, firstSeen)
+          this.queueTransactionHashToRetrieve(
+            network,
+            normalizeEVMAddress(hash),
+            firstSeen
+          )
         } else {
           logger.warn(
-            `Transaction ${hash} is too old to keep looking for it; treating ` +
+            `Transaction ${normalizedHash} is too old to keep looking for it; treating ` +
               "it as expired."
           )
 
-          this.db.getTransaction(network, hash).then((existingTransaction) => {
-            if (existingTransaction !== null) {
-              logger.debug(
-                "Found existing transaction for expired lookup; marking as " +
-                  "failed if no other status exists."
-              )
-              this.saveTransaction(
-                // Don't override an already-persisted successful status with
-                // an expiration-based failed status, but do set status to
-                // failure if no transaction was seen.
-                { status: 0, ...existingTransaction },
-                "local"
-              )
-            }
-          })
+          this.db
+            .getTransaction(network, normalizeEVMAddress(hash))
+            .then((existingTransaction) => {
+              if (existingTransaction !== null) {
+                logger.debug(
+                  "Found existing transaction for expired lookup; marking as " +
+                    "failed if no other status exists."
+                )
+                this.saveTransaction(
+                  // Don't override an already-persisted successful status with
+                  // an expiration-based failed status, but do set status to
+                  // failure if no transaction was seen.
+                  { status: 0, ...existingTransaction },
+                  "local"
+                )
+              }
+            })
         }
       }
     })
@@ -1054,7 +1078,7 @@ export default class ChainService extends BaseService<Events> {
       }
     )
     this.subscribedAccounts.push({
-      account: address,
+      account: normalizeEVMAddress(address),
       provider,
     })
   }
@@ -1074,7 +1098,7 @@ export default class ChainService extends BaseService<Events> {
 
     // TODO make proper use of the network
     this.websocketProviders.ethereum.once(
-      transaction.hash,
+      normalizeEVMAddress(transaction.hash),
       (confirmedReceipt: TransactionReceipt) => {
         this.saveTransaction(
           enrichTransactionWithReceipt(transaction, confirmedReceipt),
@@ -1098,7 +1122,7 @@ export default class ChainService extends BaseService<Events> {
 
     // TODO make proper use of the network
     const receipt = await this.pollingProviders.ethereum.getTransactionReceipt(
-      transaction.hash
+      normalizeEVMAddress(transaction.hash)
     )
     await this.saveTransaction(
       enrichTransactionWithReceipt(transaction, receipt),

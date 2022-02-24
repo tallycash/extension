@@ -10,6 +10,7 @@ import {
   SmartContractFungibleAsset,
   TokenListCitation,
 } from "../../assets"
+import { normalizeEVMAddress } from "../../lib/utils"
 
 /*
  * IndexedPricePoint extends PricePoint to expose each asset's ID directly for
@@ -174,7 +175,8 @@ export class IndexingDatabase extends Dexie {
       .above(Date.now() - 7 * 24 * 60 * 60 * 1000)
       .filter(
         (balance) =>
-          balance.address === address &&
+          normalizeEVMAddress(balance.address) ===
+            normalizeEVMAddress(address) &&
           balance.assetAmount.asset.symbol === asset.symbol &&
           balance.network.name === network.name
       )
@@ -209,7 +211,7 @@ export class IndexingDatabase extends Dexie {
   ): Promise<SmartContractFungibleAsset | undefined> {
     return this.customAssets
       .where("[contractAddress+homeNetwork.name]")
-      .equals([network.name, contractAddress])
+      .equals([network.name, normalizeEVMAddress(contractAddress)])
       .first()
   }
 

@@ -122,7 +122,7 @@ export default class NameService extends BaseService<Events> {
       "newAccountToTrack",
       async ({ address, network }) => {
         try {
-          await this.lookUpName(address, network)
+          await this.lookUpName(normalizeEVMAddress(address), network)
         } catch (error) {
           logger.error("Error fetching ENS name for address", address, error)
         }
@@ -135,18 +135,23 @@ export default class NameService extends BaseService<Events> {
           addressNetwork: { address, network },
         },
       }) => {
+        const normalizedAddress = normalizeEVMAddress(address)
         try {
-          const avatar = await this.lookUpAvatar(address, network)
+          const avatar = await this.lookUpAvatar(normalizedAddress, network)
 
           if (avatar) {
             this.emitter.emit("resolvedAvatar", {
-              from: { addressNetwork: { address, network } },
+              from: { addressNetwork: { address: normalizedAddress, network } },
               resolved: { avatar },
               system: "ENS",
             })
           }
         } catch (error) {
-          logger.error("Error fetching avatar for address", address, error)
+          logger.error(
+            "Error fetching avatar for address",
+            normalizedAddress,
+            error
+          )
         }
       }
     )
@@ -272,7 +277,7 @@ export default class NameService extends BaseService<Events> {
         ) {
           const metadata = await getTokenMetadata(
             provider,
-            erc721Address,
+            normalizeEVMAddress(erc721Address),
             BigInt(nftID)
           )
 

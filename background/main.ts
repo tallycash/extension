@@ -4,7 +4,7 @@ import { configureStore, isPlain, Middleware } from "@reduxjs/toolkit"
 import devToolsEnhancer from "remote-redux-devtools"
 import { PermissionRequest } from "@tallyho/provider-bridge-shared"
 
-import { decodeJSON, encodeJSON } from "./lib/utils"
+import { decodeJSON, encodeJSON, normalizeEVMAddress } from "./lib/utils"
 
 import {
   BaseService,
@@ -622,7 +622,7 @@ export default class Main extends BaseService<never> {
           try {
             const signedTx = await this.keyringService.signTransaction(
               {
-                address: transaction.from,
+                address: normalizeEVMAddress(transaction.from),
                 network: this.chainService.ethereumNetwork,
               },
               transactionWithNonce
@@ -663,7 +663,7 @@ export default class Main extends BaseService<never> {
       }) => {
         const signedData = await this.keyringService.signTypedData({
           typedData,
-          account,
+          account: normalizeEVMAddress(account),
         })
         this.store.dispatch(signedTypedData(signedData))
       }
@@ -780,11 +780,12 @@ export default class Main extends BaseService<never> {
     })
 
     this.keyringService.emitter.on("address", (address) => {
+      const normalizedAddress = normalizeEVMAddress(address)
       // Mark as loading and wire things up.
-      this.store.dispatch(loadAccount(address))
+      this.store.dispatch(loadAccount(normalizedAddress))
 
       this.chainService.addAccountToTrack({
-        address,
+        address: normalizedAddress,
         // TODO support other networks
         network: this.chainService.ethereumNetwork,
       })

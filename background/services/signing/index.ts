@@ -12,6 +12,7 @@ import BaseService from "../base"
 import { ServiceCreatorFunction, ServiceLifecycleEvents } from "../types"
 import ChainService from "../chain"
 import { SigningMethod } from "../../redux-slices/signing"
+import { normalizeEVMAddress } from "../../lib/utils"
 
 export type SignatureResponse =
   | {
@@ -102,7 +103,7 @@ export default class SigningService extends BaseService<Events> {
         )
       case "keyring":
         return this.keyringService.signTransaction(
-          { address: transactionWithNonce.from, network },
+          { address: normalizeEVMAddress(transactionWithNonce.from), network },
           transactionWithNonce
         )
       default:
@@ -158,7 +159,10 @@ export default class SigningService extends BaseService<Events> {
   }
 
   addTrackedAddress(address: string, handler: SignerType): void {
-    this.addressHandlers.push({ address, signer: handler })
+    this.addressHandlers.push({
+      address: normalizeEVMAddress(address),
+      signer: handler,
+    })
   }
 
   async signTypedData(

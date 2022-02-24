@@ -4,6 +4,7 @@ import { UNIXTime } from "../../types"
 import { AccountBalance, AddressOnNetwork } from "../../accounts"
 import { AnyEVMBlock, AnyEVMTransaction, Network } from "../../networks"
 import { FungibleAsset } from "../../assets"
+import { normalizeEVMAddress } from "../../lib/utils"
 
 type Transaction = AnyEVMTransaction & {
   dataSource: "alchemy" | "local"
@@ -134,7 +135,7 @@ export class ChainDatabase extends Dexie {
       (
         await this.chainTransactions
           .where("[hash+network.name]")
-          .equals([txHash, network.name])
+          .equals([normalizeEVMAddress(txHash), network.name])
           .toArray()
       )[0] || null
     )
@@ -165,7 +166,7 @@ export class ChainDatabase extends Dexie {
       (
         await this.blocks
           .where("[hash+network.name]")
-          .equals([blockHash, network.name])
+          .equals([normalizeEVMAddress(blockHash), network.name])
           .toArray()
       )[0] || null
     )
@@ -195,7 +196,8 @@ export class ChainDatabase extends Dexie {
       .above(Date.now() - 7 * 24 * 60 * 60 * 1000)
       .filter(
         (balance) =>
-          balance.address === address &&
+          normalizeEVMAddress(balance.address) ===
+            normalizeEVMAddress(address) &&
           balance.assetAmount.asset.symbol === asset.symbol &&
           balance.network.name === network.name
       )
@@ -223,7 +225,7 @@ export class ChainDatabase extends Dexie {
     // TODO this is inefficient, make proper use of indexing
     const lookups = await this.accountAssetTransferLookups
       .where("addressNetwork.address")
-      .equals(addressNetwork.address)
+      .equals(normalizeEVMAddress(addressNetwork.address))
       .toArray()
     return lookups.reduce(
       (oldestBlock: bigint | null, lookup) =>
@@ -240,7 +242,7 @@ export class ChainDatabase extends Dexie {
     // TODO this is inefficient, make proper use of indexing
     const lookups = await this.accountAssetTransferLookups
       .where("addressNetwork.address")
-      .equals(addressNetwork.address)
+      .equals(normalizeEVMAddress(addressNetwork.address))
       .toArray()
     return lookups.reduce(
       (newestBlock: bigint | null, lookup) =>

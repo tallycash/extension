@@ -19,7 +19,7 @@ import { ServiceCreatorFunction, ServiceLifecycleEvents } from "../types"
 import PreferenceService from "../preferences"
 import logger from "../../lib/logger"
 import { HexString } from "../../types"
-import { sameEVMAddress } from "../../lib/utils"
+import { normalizeEVMAddress, sameEVMAddress } from "../../lib/utils"
 
 type Events = ServiceLifecycleEvents & {
   requestPermission: PermissionRequest
@@ -138,13 +138,14 @@ export default class ProviderBridgeService extends BaseService<Events> {
 
       const { address: accountAddress } =
         await this.preferenceService.getSelectedAccount()
+      const normalizedAccountAddress = normalizeEVMAddress(accountAddress)
       const permissionRequest: PermissionRequest = {
-        key: `${origin}_${accountAddress}`,
+        key: `${origin}_${normalizedAccountAddress}`,
         origin,
         faviconUrl,
         title,
         state: "request",
-        accountAddress,
+        accountAddress: normalizedAccountAddress,
       }
 
       const blockUntilUserAction = await this.requestPermission(
@@ -200,7 +201,9 @@ export default class ProviderBridgeService extends BaseService<Events> {
           id: "tallyHo",
           result: {
             method: "tally_accountChanged",
-            address: [newAddress],
+            address: [
+              newAddress != null ? normalizeEVMAddress(newAddress) : newAddress,
+            ],
           },
         })
       } else {
@@ -247,7 +250,10 @@ export default class ProviderBridgeService extends BaseService<Events> {
     const { address } = await this.preferenceService.getSelectedAccount()
 
     // TODO make this multi-network friendly
-    await this.db.deletePermission(permission.origin, address)
+    await this.db.deletePermission(
+      permission.origin,
+      normalizeEVMAddress(address)
+    )
 
     if (this.#pendingPermissionsRequests[permission.origin]) {
       this.#pendingPermissionsRequests[permission.origin]("Time to move on")
@@ -263,7 +269,7 @@ export default class ProviderBridgeService extends BaseService<Events> {
   ): Promise<PermissionRequest | undefined> {
     const { address: selectedAddress } =
       await this.preferenceService.getSelectedAccount()
-    const currentAddress = address ?? selectedAddress
+    const currentAddress = normalizeEVMAddress(address ?? selectedAddress)
     // TODO make this multi-network friendly
     return this.db.checkPermission(origin, currentAddress)
   }
@@ -294,7 +300,7 @@ export default class ProviderBridgeService extends BaseService<Events> {
       switch (method) {
         case "eth_requestAccounts":
         case "eth_accounts":
-          return [enablingPermission.accountAddress]
+          return [normalizeEVMAddress(enablingPermission.accountAddress)]
         case "eth_signTypedData":
         case "eth_signTypedData_v1":
         case "eth_signTypedData_v3":

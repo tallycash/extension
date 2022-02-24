@@ -285,7 +285,11 @@ export default class LedgerService extends BaseService<Events> {
       throw new Error("No Ledger id is set!")
     }
 
-    await this.db.addAccount({ ledgerId: this.#currentLedgerId, path, address })
+    await this.db.addAccount({
+      ledgerId: this.#currentLedgerId,
+      path,
+      address: normalizeEVMAddress(address),
+    })
   }
 
   async signTransaction(
@@ -314,7 +318,7 @@ export default class LedgerService extends BaseService<Events> {
         ).substring(2) // serialize adds 0x prefix which kills Eth::signTransaction
 
         const accountData = await this.db.getAccountByAddress(
-          transactionRequest.from
+          normalizeEVMAddress(transactionRequest.from)
         )
 
         if (
@@ -358,9 +362,9 @@ export default class LedgerService extends BaseService<Events> {
         }
 
         const signedTx: SignedEVMTransaction = {
-          hash: tx.hash,
-          from: tx.from,
-          to: tx.to,
+          hash: normalizeEVMAddress(tx.hash),
+          from: normalizeEVMAddress(tx.from),
+          to: tx.to != null ? normalizeEVMAddress(tx.to) : tx.to,
           nonce: tx.nonce,
           input: tx.data,
           value: tx.value.toBigInt(),

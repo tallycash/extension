@@ -19,6 +19,7 @@ import {
 import PreferenceService from "../preferences"
 import { internalProviderPort } from "../../redux-slices/utils/contract-utils"
 import { SignTypedDataRequest } from "../../redux-slices/signing"
+import { normalizeEVMAddress } from "../../lib/utils"
 
 // A type representing the transaction requests that come in over JSON-RPC
 // requests like eth_sendTransaction and eth_signTransaction. These are very
@@ -155,7 +156,7 @@ export default class InternalEthereumProviderService extends BaseService<Events>
       case "eth_accounts": {
         // This is a special method, because Alchemy provider DO support it, but always return null (because they do not store keys.)
         const { address } = await this.preferenceService.getSelectedAccount()
-        return [address]
+        return [normalizeEVMAddress(address)]
       }
       case "eth_sendTransaction":
         return this.signTransaction(
