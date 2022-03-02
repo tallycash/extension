@@ -1,3 +1,4 @@
+import { truncateAddress } from "@tallyho/tally-background/lib/utils"
 import { AccountTotal } from "@tallyho/tally-background/redux-slices/selectors"
 import React, { ReactElement } from "react"
 import SharedButton from "../Shared/SharedButton"
@@ -31,10 +32,7 @@ export default function SignTransactionWrongLedgerConnected({
                     ?.focus()
                 }}
               >
-                {`${signerAccountTotal.address.slice(
-                  0,
-                  7
-                )}...${signerAccountTotal.address.slice(-6)}`}
+                {`${truncateAddress(signerAccountTotal.address)}`}
               </SharedButton>
             </div>
           </div>

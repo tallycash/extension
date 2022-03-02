@@ -24,7 +24,10 @@ import { fixedPointNumberToString } from "@tallyho/tally-background/lib/fixed-po
 import { AsyncThunkFulfillmentType } from "@tallyho/tally-background/redux-slices/utils"
 import logger from "@tallyho/tally-background/lib/logger"
 import { useHistory, useLocation } from "react-router-dom"
-import { normalizeEVMAddress } from "@tallyho/tally-background/lib/utils"
+import {
+  normalizeEVMAddress,
+  sameEVMAddress,
+} from "@tallyho/tally-background/lib/utils"
 import { CompleteSmartContractFungibleAssetAmount } from "@tallyho/tally-background/redux-slices/accounts"
 import {
   clearTransactionState,
@@ -50,10 +53,7 @@ function isSameAsset(asset1: AnyAsset, asset2: AnyAsset) {
     isSmartContractFungibleAsset(asset1) &&
     isSmartContractFungibleAsset(asset2)
   ) {
-    return (
-      normalizeEVMAddress(asset1.contractAddress) ===
-      normalizeEVMAddress(asset2.contractAddress)
-    )
+    return sameEVMAddress(asset1.contractAddress, asset2.contractAddress)
   }
 
   if (
@@ -100,8 +100,10 @@ export default function Swap(): ReactElement {
       if (typeof locationAssetContractAddress !== "undefined") {
         return (
           isSmartContractFungibleAsset(candidateAsset) &&
-          normalizeEVMAddress(candidateAsset.contractAddress) ===
-            normalizeEVMAddress(locationAssetContractAddress)
+          sameEVMAddress(
+            candidateAsset.contractAddress,
+            locationAssetContractAddress
+          )
         )
       }
       return candidateAsset.symbol === locationAssetSymbol
@@ -173,9 +175,10 @@ export default function Swap(): ReactElement {
   const inProgressApprovalContract = useBackgroundSelector(
     selectInProgressApprovalContract
   )
-  const isApprovalInProgress =
-    normalizeEVMAddress(inProgressApprovalContract || "0x") ===
-    normalizeEVMAddress(sellAsset?.contractAddress || "0x")
+  const isApprovalInProgress = sameEVMAddress(
+    inProgressApprovalContract || "0x",
+    sellAsset?.contractAddress || "0x"
+  )
 
   const [sellAmountLoading, setSellAmountLoading] = useState(false)
   const [buyAmountLoading, setBuyAmountLoading] = useState(false)
@@ -234,7 +237,7 @@ export default function Swap(): ReactElement {
 
     dispatch(
       approveTransfer({
-        assetContractAddress: sellAsset.contractAddress,
+        assetContractAddress: normalizeEVMAddress(sellAsset.contractAddress),
         approvalTarget,
       })
     )

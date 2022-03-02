@@ -2,6 +2,7 @@ import React, { ReactElement } from "react"
 import { Link } from "react-router-dom"
 import { CompleteAssetAmount } from "@tallyho/tally-background/redux-slices/accounts"
 
+import { normalizeEVMAddress } from "@tallyho/tally-background/lib/utils"
 import SharedLoadingSpinner from "../Shared/SharedLoadingSpinner"
 import SharedAssetIcon from "../Shared/SharedAssetIcon"
 
@@ -25,7 +26,7 @@ export default function WalletAssetListItem(props: Props): ReactElement {
             symbol: assetAmount.asset.symbol,
             contractAddress:
               "contractAddress" in assetAmount.asset
-                ? assetAmount.asset.contractAddress
+                ? normalizeEVMAddress(assetAmount.asset.contractAddress)
                 : undefined,
           },
         }}

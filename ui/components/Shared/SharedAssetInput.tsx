@@ -133,7 +133,9 @@ function SelectAssetMenuContent<T extends AnyAsset>(
               key={
                 asset.metadata?.coinGeckoID ??
                 asset.symbol +
-                  ("contractAddress" in asset ? asset.contractAddress : "")
+                  ("contractAddress" in asset
+                    ? normalizeEVMAddress(asset.contractAddress)
+                    : "")
               }
               assetAndAmount={assetWithOptionalAmount}
               onClick={() => setSelectedAssetAndClose(assetWithOptionalAmount)}

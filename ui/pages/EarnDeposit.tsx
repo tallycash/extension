@@ -9,6 +9,10 @@ import {
 
 import { AnyAsset } from "@tallyho/tally-background/assets"
 import { HexString } from "@tallyho/tally-background/types"
+import {
+  sameEVMAddress,
+  normalizeEVMAddress,
+} from "@tallyho/tally-background/lib/utils"
 import { useLocation } from "react-router-dom"
 import BackButton from "../components/Shared/SharedBackButton"
 import SharedAssetIcon from "../components/Shared/SharedAssetIcon"
@@ -47,8 +51,8 @@ export default function EarnDeposit(): ReactElement {
 
   const isTokenApproved = () => {
     if (!isApproved) {
-      const allowanceIndex = approvals?.findIndex(
-        (approval) => approval.contractAddress === asset.contractAddress
+      const allowanceIndex = approvals?.findIndex((approval) =>
+        sameEVMAddress(approval.contractAddress, asset.contractAddress)
       )
       if (allowanceIndex !== -1) {
         setIsApproved(true)
@@ -59,13 +63,13 @@ export default function EarnDeposit(): ReactElement {
   isTokenApproved()
 
   const approve = () => {
-    dispatch(approveApprovalTarget(asset.contractAddress))
+    dispatch(approveApprovalTarget(normalizeEVMAddress(asset.contractAddress)))
   }
 
   const enable = () => {
     dispatch(
       permitVaultDeposit({
-        vaultContractAddress: asset.contractAddress,
+        vaultContractAddress: normalizeEVMAddress(asset.contractAddress),
         amount: 2000n,
       })
     )
@@ -85,7 +89,9 @@ export default function EarnDeposit(): ReactElement {
   }
 
   useEffect(() => {
-    dispatch(checkApprovalTargetApproval(asset.contractAddress))
+    dispatch(
+      checkApprovalTargetApproval(normalizeEVMAddress(asset.contractAddress))
+    )
   }, [dispatch, asset.contractAddress])
 
   return (

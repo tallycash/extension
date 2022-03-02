@@ -9,7 +9,10 @@ import {
   HIDE_SEND_BUTTON,
   HIDE_SWAP,
 } from "@tallyho/tally-background/features/features"
-import { normalizeEVMAddress } from "@tallyho/tally-background/lib/utils"
+import {
+  normalizeEVMAddress,
+  sameEVMAddress,
+} from "@tallyho/tally-background/lib/utils"
 import { isSmartContractFungibleAsset } from "@tallyho/tally-background/assets"
 import { useBackgroundSelector } from "../hooks"
 import SharedAssetIcon from "../components/Shared/SharedAssetIcon"
@@ -30,7 +33,7 @@ export default function SingleAsset(): ReactElement {
       (activity) => {
         if (
           typeof contractAddress !== "undefined" &&
-          contractAddress === activity.to
+          sameEVMAddress(contractAddress, activity.to)
         ) {
           return true
         }
@@ -64,8 +67,7 @@ export default function SingleAsset(): ReactElement {
         if (typeof contractAddress !== "undefined") {
           return (
             isSmartContractFungibleAsset(candidateAsset) &&
-            normalizeEVMAddress(candidateAsset.contractAddress) ===
-              normalizeEVMAddress(contractAddress)
+            sameEVMAddress(candidateAsset.contractAddress, contractAddress)
           )
         }
         return candidateAsset.symbol === symbol
@@ -114,7 +116,7 @@ export default function SingleAsset(): ReactElement {
                         symbol,
                         contractAddress:
                           "contractAddress" in asset
-                            ? asset.contractAddress
+                            ? normalizeEVMAddress(asset.contractAddress)
                             : undefined,
                       },
                     }}
@@ -133,7 +135,7 @@ export default function SingleAsset(): ReactElement {
                         symbol,
                         contractAddress:
                           "contractAddress" in asset
-                            ? asset.contractAddress
+                            ? normalizeEVMAddress(asset.contractAddress)
                             : undefined,
                       },
                     }}

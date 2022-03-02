@@ -112,7 +112,8 @@ export function getEthereumNetwork(): EVMNetwork {
 }
 
 export function truncateAddress(address: string): string {
-  return `${address.slice(0, 6)}...${address.slice(-5)}`
+  const normalizedAddress = normalizeEVMAddress(address)
+  return `${normalizedAddress.slice(0, 6)}...${normalizedAddress.slice(-5)}`
 }
 
 export const getNumericStringValueFromBigNumber = (

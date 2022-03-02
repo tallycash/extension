@@ -10,6 +10,7 @@ import {
   TransactionConstructionStatus,
 } from "@tallyho/tally-background/redux-slices/transaction-construction"
 import { getAccountTotal } from "@tallyho/tally-background/redux-slices/selectors"
+import { normalizeEVMAddress } from "@tallyho/tally-background/lib/utils"
 import {
   useBackgroundDispatch,
   useBackgroundSelector,
@@ -53,7 +54,10 @@ export default function SignTransaction({
 
   const signerAccountTotal = useBackgroundSelector((state) => {
     if (typeof transactionDetails !== "undefined") {
-      return getAccountTotal(state, transactionDetails.from)
+      return getAccountTotal(
+        state,
+        normalizeEVMAddress(transactionDetails.from)
+      )
     }
     return undefined
   })
