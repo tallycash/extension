@@ -1,43 +1,34 @@
-import React, { ReactElement, useState, useRef, useEffect } from "react"
-import { MemoryRouter as Router, Switch, Route } from "react-router-dom"
-import { ErrorBoundary } from "react-error-boundary"
-
-import classNames from "classnames"
-import {
-  setRouteHistoryEntries,
-  Location,
-} from "@tallyho/tally-background/redux-slices/ui"
-
-import { Store } from "webext-redux"
-import { Provider } from "react-redux"
-import { TransitionGroup, CSSTransition } from "react-transition-group"
 import { isAllowedQueryParamPage } from "@tallyho/provider-bridge-shared"
 import { PERSIST_UI_LOCATION } from "@tallyho/tally-background/features/features"
-import { runtime } from "webextension-polyfill"
 import { popupMonitorPortName } from "@tallyho/tally-background/main"
 import {
-  useIsDappPopup,
-  useBackgroundDispatch,
-  useBackgroundSelector,
-} from "../hooks"
-
-import setAnimationConditions, {
-  animationStyles,
-} from "../utils/pageTransition"
-
+  Location,
+  setRouteHistoryEntries,
+} from "@tallyho/tally-background/redux-slices/ui"
+import classNames from "classnames"
+import React, { ReactElement, useEffect, useRef } from "react"
+import { ErrorBoundary } from "react-error-boundary"
+import { Provider } from "react-redux"
+import {
+  matchPath,
+  MemoryRouter as Router,
+  useHistory,
+  useLocation,
+} from "react-router-dom"
+import { CSSTransition, TransitionGroup } from "react-transition-group"
+import { Store } from "webext-redux"
+import { runtime } from "webextension-polyfill"
+import Snackbar from "../components/Snackbar/Snackbar"
 import TabBar from "../components/TabBar/TabBar"
 import TopMenu from "../components/TopMenu/TopMenu"
-import CorePage from "../components/Core/CorePage"
-import ErrorFallback from "./ErrorFallback"
-
+import {
+  useBackgroundDispatch,
+  useBackgroundSelector,
+  useIsDappPopup,
+} from "../hooks"
 import pageList from "../routes/routes"
-
-const pagePreferences = Object.fromEntries(
-  pageList.map(({ path, hasTabBar, hasTopBar, persistOnClose }) => [
-    path,
-    { hasTabBar, hasTopBar, persistOnClose },
-  ])
-)
+import tabs from "../utils/tabs"
+import ErrorFallback from "./ErrorFallback"
 
 function transformLocation(inputLocation: Location): Location {
   // The inputLocation is not populated with the actual query string — even though it should be
@@ -69,187 +60,240 @@ function useConnectPopupMonitor() {
   }, [])
 }
 
-export function Main(): ReactElement {
+function PopupPageSwitcher() {
+  const location = useLocation()
+  const history = useHistory()
+
   const dispatch = useBackgroundDispatch()
 
-  const isDappPopup = useIsDappPopup()
-  const [shouldDisplayDecoy, setShouldDisplayDecoy] = useState(false)
-  const [isDirectionRight, setIsDirectionRight] = useState(true)
-  const [showTabBar, setShowTabBar] = useState(true)
   const renderCount = useRef(0)
+
+  const { entries } = history as unknown as {
+    entries: {
+      state: {
+        isBack: boolean
+      }
+      pathname: string
+    }[]
+  }
+
+  const transformedLocation = transformLocation(location)
+
+  const locationName = location.pathname.split("/")[1]
+  const prevLocationName =
+    (entries &&
+      entries[entries.length - 2] &&
+      entries[entries.length - 2].pathname.split("/")[1]) ||
+    ""
+
+  const isGoingBetweenTabs =
+    tabs.includes(locationName) && tabs.includes(prevLocationName)
+
+  const isGoingToATabLeftOfTab =
+    tabs.includes(locationName) &&
+    tabs.indexOf(locationName) < tabs.indexOf(prevLocationName)
+
+  const isGoingBack =
+    entries &&
+    entries[entries.length - 1] &&
+    entries[entries.length - 1]?.state?.isBack === true
+
+  const isDirectionRight =
+    isGoingBack || (isGoingBetweenTabs && isGoingToATabLeftOfTab)
+
+  const normalizedPathname =
+    transformedLocation.pathname !== "/wallet"
+      ? transformedLocation.pathname
+      : "/"
+
+  const currentPage = pageList.find(
+    ({ path }) => matchPath(normalizedPathname, { path }) !== null
+  )
+
+  if (!currentPage) throw new Error(`no current page`)
+
+  const { path, Component, hasTabBar, hasTopBar, persistOnClose } = currentPage
+
+  useEffect(() => {
+    if (PERSIST_UI_LOCATION && persistOnClose) {
+      const isNotOnKeyringRelatedPage =
+        entries[entries.length - 1].pathname !== "/sign-transaction" &&
+        !entries[entries.length - 1].pathname.includes("/keyring/")
+
+      // Initial extension load takes two renders because of setting
+      // animation control states. `initialEntries` needs to be a reversed
+      // version of route history entities. Without avoiding the initial load,
+      // entries will keep reversing.
+      if (renderCount.current > 1 && isNotOnKeyringRelatedPage) {
+        dispatch(
+          setRouteHistoryEntries(
+            entries
+              .reduce((agg: Partial<Location>[], entry) => {
+                const { hash, key, ...entryCopy } = entry as Partial<Location>
+                agg.push(entryCopy)
+                return agg
+              }, [])
+              .reverse()
+          )
+        )
+      }
+    }
+
+    renderCount.current += 1
+  }, [dispatch, entries, persistOnClose])
+
+  return (
+    <>
+      <TransitionGroup className="transition_group_container">
+        {hasTopBar && (
+          <CSSTransition timeout={3000} classNames="page-transition">
+            <div className="top_menu_wrap">
+              <TopMenu />
+            </div>
+          </CSSTransition>
+        )}
+      </TransitionGroup>
+      <TransitionGroup className="transition_group_container">
+        <CSSTransition key={path} timeout={3000} classNames="page-transition">
+          <main className={classNames({ has_top_bar: hasTopBar })}>
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <Component location={transformedLocation} />
+            </ErrorBoundary>
+            <Snackbar />
+          </main>
+        </CSSTransition>
+      </TransitionGroup>
+      <TransitionGroup className="transition_group_container">
+        <CSSTransition key={path} timeout={3000} classNames="page-transition">
+          <main className={classNames({ has_top_bar: hasTopBar })}>
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <Component location={transformedLocation} />
+            </ErrorBoundary>
+            <Snackbar />
+          </main>
+        </CSSTransition>
+      </TransitionGroup>
+      {hasTabBar && (
+        <div className="tab_bar_wrap">
+          <TabBar />
+        </div>
+      )}
+      {/* Global style is needed as TransitionGroup is not scoped. */}
+      <style jsx global>{`
+        .transition_group_container {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+        }
+      `}</style>
+      <style jsx global>{`
+        .page-transition-enter {
+          opacity: 0.3;
+          transform: ${isDirectionRight
+            ? `translateX(-7px)`
+            : `translateX(7px)`};
+          z-index: 2;
+        }
+        .page-transition-enter-active {
+          opacity: 1;
+          transform: translateX(0px);
+          transition: transform cubic-bezier(0.25, 0.4, 0.55, 1.4) 250ms,
+            opacity 250ms;
+        }
+        .page-transition-enter-done {
+          z-index: 2;
+        }
+        .page-transition-exit {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          opacity: 1;
+          transform: translateX(0px);
+          transition: transform cubic-bezier(0.25, 0.4, 0.55, 1.4) 250ms,
+            opacity 250ms;
+          z-index: 1;
+        }
+        .page-transition-exit-active {
+          opacity: 0;
+          transform: ${isDirectionRight
+            ? `translateX(7px)`
+            : `translateX(-7px)`};
+        }
+      `}</style>
+      <style jsx>{`
+        main {
+          width: 100%;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          flex-grow: 1;
+          margin: 0 auto;
+          align-items: center;
+          background-color: var(--hunter-green);
+          height: 100vh;
+          margin-top: 0px;
+        }
+        main.has_top_bar {
+          height: 480px;
+          margin-top: 64px;
+        }
+        .tab_bar_wrap {
+          position: fixed;
+          bottom: 0px;
+          z-index: 10;
+          width: 100%;
+        }
+        .top_menu_wrap {
+          margin: 0 auto;
+          width: max-content;
+          display: block;
+          justify-content: center;
+          margin-top: 5px;
+          background-color: var(--hunter-green);
+        }
+      `}</style>
+    </>
+  )
+}
+
+export function Main(): ReactElement {
+  const isDappPopup = useIsDappPopup()
 
   const routeHistoryEntries = useBackgroundSelector(
     (state) => state.ui.routeHistoryEntries
   )
 
-  function saveHistoryEntries(routeHistoryEntities: Location[]) {
-    const isNotOnKeyringRelatedPage =
-      routeHistoryEntities[routeHistoryEntities.length - 1].pathname !==
-        "/sign-transaction" &&
-      !routeHistoryEntities[routeHistoryEntities.length - 1].pathname.includes(
-        "/keyring/"
-      )
-
-    // Initial extension load takes two renders because of setting
-    // animation control states. `initialEntries` needs to be a reversed
-    // version of route history entities. Without avoiding the initial load,
-    // entries will keep reversing.
-    if (renderCount.current > 1 && isNotOnKeyringRelatedPage) {
-      const entries = routeHistoryEntities
-        .reduce((agg: Partial<Location>[], entity) => {
-          const { ...entityCopy } = entity as Partial<Location>
-          delete entityCopy.hash
-          delete entityCopy.key
-          agg.push(entityCopy)
-          return agg
-        }, [])
-        .reverse()
-
-      dispatch(setRouteHistoryEntries(entries))
-    }
-  }
-
   useConnectPopupMonitor()
+
+  useEffect(() => {
+    document.body.classList.toggle("dapp", isDappPopup)
+  }, [isDappPopup])
 
   return (
     <>
-      <div className="top_menu_wrap_decoy">
-        <TopMenu />
-      </div>
       <div className="community_edition_label">Community Edition</div>
       <Router initialEntries={routeHistoryEntries}>
-        <Route
-          render={(routeProps) => {
-            const transformedLocation = transformLocation(routeProps.location)
-
-            const normalizedPathname =
-              transformedLocation.pathname !== "/wallet"
-                ? transformedLocation.pathname
-                : "/"
-
-            if (
-              PERSIST_UI_LOCATION &&
-              pagePreferences[normalizedPathname].persistOnClose
-            ) {
-              // @ts-expect-error TODO: fix the typing
-              saveHistoryEntries(routeProps?.history?.entries)
-            }
-
-            setAnimationConditions(
-              routeProps,
-              pagePreferences,
-              setShouldDisplayDecoy,
-              setIsDirectionRight
-            )
-            setShowTabBar(pagePreferences[normalizedPathname].hasTabBar)
-            renderCount.current += 1
-
-            return (
-              <TransitionGroup>
-                <CSSTransition
-                  timeout={300}
-                  classNames="page-transition"
-                  key={
-                    routeProps.location.pathname.includes("onboarding") ||
-                    routeProps.location.pathname.includes("keyring")
-                      ? ""
-                      : transformedLocation.key
-                  }
-                >
-                  <div>
-                    <div
-                      className={classNames("top_menu_wrap", {
-                        anti_animation: shouldDisplayDecoy,
-                        hide: !pagePreferences[normalizedPathname].hasTopBar,
-                      })}
-                    >
-                      <TopMenu />
-                    </div>
-                    {/* @ts-expect-error TODO: fix the typing when the feature works */}
-                    <Switch location={transformedLocation}>
-                      {pageList.map(
-                        ({ path, Component, hasTabBar, hasTopBar }) => {
-                          return (
-                            <Route path={path} key={path}>
-                              <CorePage
-                                hasTabBar={hasTabBar}
-                                hasTopBar={hasTopBar}
-                              >
-                                <ErrorBoundary
-                                  FallbackComponent={ErrorFallback}
-                                >
-                                  <Component location={transformedLocation} />
-                                </ErrorBoundary>
-                              </CorePage>
-                            </Route>
-                          )
-                        }
-                      )}
-                    </Switch>
-                  </div>
-                </CSSTransition>
-              </TransitionGroup>
-            )
-          }}
-        />
-        {showTabBar && (
-          <div className="tab_bar_wrap">
-            <TabBar />
-          </div>
-        )}
+        <PopupPageSwitcher />
       </Router>
-      <>
-        <style jsx global>
-          {`
-            ::-webkit-scrollbar {
-              width: 0px;
-              background: transparent;
-            }
-
-            ${animationStyles(shouldDisplayDecoy, isDirectionRight)}
-            .tab_bar_wrap {
-              position: fixed;
-              bottom: 0px;
-              width: 100%;
-            }
-            .top_menu_wrap {
-              margin: 0 auto;
-              width: max-content;
-              display: block;
-              justify-content: center;
-              z-index: 0;
-              margin-top: 5px;
-            }
-            .hide {
-              opacity: 0;
-            }
-            .community_edition_label {
-              width: 140px;
-              height: 20px;
-              left: 24px;
-              position: fixed;
-              background-color: var(--gold-60);
-              color: var(--hunter-green);
-              font-weight: 500;
-              text-align: center;
-              border-bottom-left-radius: 4px;
-              border-bottom-right-radius: 4px;
-              font-size: 14px;
-              z-index: 1000;
-              top: 0px;
-            }
-          `}
-        </style>
-      </>
-      {isDappPopup && (
-        <style jsx global>
-          {`
-            body {
-              height: 100%;
-            }
-          `}
-        </style>
-      )}
+      <style jsx>{`
+        .community_edition_label {
+          width: 140px;
+          height: 20px;
+          left: 24px;
+          position: fixed;
+          background-color: var(--gold-60);
+          color: var(--hunter-green);
+          font-weight: 500;
+          text-align: center;
+          border-bottom-left-radius: 4px;
+          border-bottom-right-radius: 4px;
+          font-size: 14px;
+          z-index: 1000;
+          top: 0px;
+        }
+      `}</style>
     </>
   )
 }

@@ -53,6 +53,10 @@ body.popup {
   scrollbar-width: none;
 }
 
+body.popup.dapp {
+  height: 100%;
+}
+
 a {
   text-decoration: none;
 }

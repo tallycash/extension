@@ -32,7 +32,6 @@ import {
   selectDefaultNetworkFeeSettings,
   TransactionConstructionStatus,
 } from "@tallyho/tally-background/redux-slices/transaction-construction"
-import CorePage from "../components/Core/CorePage"
 import SharedAssetInput from "../components/Shared/SharedAssetInput"
 import SharedButton from "../components/Shared/SharedButton"
 import SharedSlideUpMenu from "../components/Shared/SharedSlideUpMenu"
@@ -415,98 +414,82 @@ export default function Swap(): ReactElement {
 
   return (
     <>
-      <CorePage>
-        <SharedSlideUpMenu
-          isOpen={typeof finalQuote !== "undefined"}
-          close={() => {
-            dispatch(clearSwapQuote())
-          }}
-          size="large"
-        >
-          {typeof sellAsset !== "undefined" &&
-          typeof buyAsset !== "undefined" &&
-          typeof finalQuote !== "undefined" ? (
-            <SwapQuote
-              sellAsset={sellAsset}
-              buyAsset={buyAsset}
-              finalQuote={finalQuote}
-              swapTransactionSettings={swapTransactionSettings}
+      <SharedSlideUpMenu
+        isOpen={typeof finalQuote !== "undefined"}
+        close={() => {
+          dispatch(clearSwapQuote())
+        }}
+        size="large"
+      >
+        {typeof sellAsset !== "undefined" &&
+        typeof buyAsset !== "undefined" &&
+        typeof finalQuote !== "undefined" ? (
+          <SwapQuote
+            sellAsset={sellAsset}
+            buyAsset={buyAsset}
+            finalQuote={finalQuote}
+            swapTransactionSettings={swapTransactionSettings}
+          />
+        ) : (
+          <></>
+        )}
+      </SharedSlideUpMenu>
+      <div className="standard_width swap_wrap">
+        <SharedActivityHeader label="Swap Assets" activity="swap" />
+        <div className="form">
+          <div className="form_input">
+            <SharedAssetInput<SmartContractFungibleAsset | FungibleAsset>
+              amount={sellAmount}
+              assetsAndAmounts={sellAssetAmounts}
+              selectedAsset={sellAsset}
+              disableDropdown={typeof locationAsset !== "undefined"}
+              isDisabled={sellAmountLoading}
+              onAssetSelect={updateSellAsset}
+              onAmountChange={(newAmount, error) => {
+                setSellAmount(newAmount)
+                if (typeof error === "undefined") {
+                  updateSwapData("sell", newAmount)
+                }
+              }}
+              label="Swap from:"
             />
-          ) : (
-            <></>
-          )}
-        </SharedSlideUpMenu>
-        <div className="standard_width swap_wrap">
-          <SharedActivityHeader label="Swap Assets" activity="swap" />
-          <div className="form">
-            <div className="form_input">
-              <SharedAssetInput<SmartContractFungibleAsset | FungibleAsset>
-                amount={sellAmount}
-                assetsAndAmounts={sellAssetAmounts}
-                selectedAsset={sellAsset}
-                disableDropdown={typeof locationAsset !== "undefined"}
-                isDisabled={sellAmountLoading}
-                onAssetSelect={updateSellAsset}
-                onAmountChange={(newAmount, error) => {
-                  setSellAmount(newAmount)
-                  if (typeof error === "undefined") {
-                    updateSwapData("sell", newAmount)
-                  }
-                }}
-                label="Swap from:"
-              />
-            </div>
-            <button className="icon_change" type="button" onClick={flipSwap}>
-              Switch Assets
-            </button>
-            <div className="form_input">
-              <SharedAssetInput<SmartContractFungibleAsset | FungibleAsset>
-                amount={buyAmount}
-                // FIXME Merge master asset list with account balances.
-                assetsAndAmounts={buyAssets.map((asset) => ({ asset }))}
-                selectedAsset={buyAsset}
-                isDisabled={buyAmountLoading}
-                showMaxButton={false}
-                onAssetSelect={updateBuyAsset}
-                onAmountChange={(newAmount, error) => {
-                  setBuyAmount(buyAmount)
-                  if (typeof error === "undefined") {
-                    updateSwapData("buy", newAmount)
-                  }
-                }}
-                label="Swap to:"
-              />
-            </div>
-            <div className="settings_wrap">
-              <SwapTransactionSettingsChooser
-                swapTransactionSettings={swapTransactionSettings}
-                onSwapTransactionSettingsSave={setSwapTransactionSettings}
-              />
-            </div>
-            <div className="footer standard_width_padded">
-              {
-                // Would welcome an alternative here---this is pretty gnarly.
-                // eslint-disable-next-line no-nested-ternary
-                needsApproval ? (
-                  isApprovalInProgress ? (
-                    <SharedButton type="primary" size="large" isDisabled>
-                      Waiting for approval transaction...
-                    </SharedButton>
-                  ) : (
-                    <SharedButton
-                      type="primary"
-                      size="large"
-                      isDisabled={
-                        typeof latestQuoteRequest.current === "undefined" ||
-                        sellAmountLoading ||
-                        buyAmountLoading
-                      }
-                      onClick={approveAsset}
-                      showLoadingOnClick={!confirmationMenu}
-                    >
-                      Approve asset
-                    </SharedButton>
-                  )
+          </div>
+          <button className="icon_change" type="button" onClick={flipSwap}>
+            Switch Assets
+          </button>
+          <div className="form_input">
+            <SharedAssetInput<SmartContractFungibleAsset | FungibleAsset>
+              amount={buyAmount}
+              // FIXME Merge master asset list with account balances.
+              assetsAndAmounts={buyAssets.map((asset) => ({ asset }))}
+              selectedAsset={buyAsset}
+              isDisabled={buyAmountLoading}
+              showMaxButton={false}
+              onAssetSelect={updateBuyAsset}
+              onAmountChange={(newAmount, error) => {
+                setBuyAmount(buyAmount)
+                if (typeof error === "undefined") {
+                  updateSwapData("buy", newAmount)
+                }
+              }}
+              label="Swap to:"
+            />
+          </div>
+          <div className="settings_wrap">
+            <SwapTransactionSettingsChooser
+              swapTransactionSettings={swapTransactionSettings}
+              onSwapTransactionSettingsSave={setSwapTransactionSettings}
+            />
+          </div>
+          <div className="footer standard_width_padded">
+            {
+              // Would welcome an alternative here---this is pretty gnarly.
+              // eslint-disable-next-line no-nested-ternary
+              needsApproval ? (
+                isApprovalInProgress ? (
+                  <SharedButton type="primary" size="large" isDisabled>
+                    Waiting for approval transaction...
+                  </SharedButton>
                 ) : (
                   <SharedButton
                     type="primary"
@@ -516,21 +499,35 @@ export default function Swap(): ReactElement {
                       sellAmountLoading ||
                       buyAmountLoading
                     }
-                    onClick={getFinalQuote}
+                    onClick={approveAsset}
                     showLoadingOnClick={!confirmationMenu}
                   >
-                    Get final quote
+                    Approve asset
                   </SharedButton>
                 )
-              }
-            </div>
+              ) : (
+                <SharedButton
+                  type="primary"
+                  size="large"
+                  isDisabled={
+                    typeof latestQuoteRequest.current === "undefined" ||
+                    sellAmountLoading ||
+                    buyAmountLoading
+                  }
+                  onClick={getFinalQuote}
+                  showLoadingOnClick={!confirmationMenu}
+                >
+                  Get final quote
+                </SharedButton>
+              )
+            }
           </div>
         </div>
-      </CorePage>
+      </div>
       <style jsx>
         {`
           .swap_wrap {
-            margin-top: -9px;
+            margin: -9px auto 0;
           }
           .network_fee_group {
             display: flex;
