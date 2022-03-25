@@ -2,6 +2,7 @@ import React, { ReactElement } from "react"
 import {
   HIDE_ADD_SEED,
   HIDE_CREATE_PHRASE,
+  HIDE_IMPORT_TREZOR,
 } from "@tallyho/tally-background/features/features"
 import { isLedgerSupported } from "@tallyho/tally-background/services/ledger"
 import SharedBackButton from "../../components/Shared/SharedBackButton"
@@ -57,6 +58,23 @@ export default function OnboardingStartTheHunt(): ReactElement {
               }}
             >
               Connect to a Ledger
+            </SharedButton>
+          </li>
+        )}
+        {HIDE_IMPORT_TREZOR ? (
+          <></>
+        ) : (
+          <li className="option standard_width">
+            <div className="icon ledger_icon" />
+            <SharedButton
+              type="tertiary"
+              size="medium"
+              onClick={() => {
+                window.open("/tab.html#/trezor", "_blank")?.focus()
+                window.close()
+              }}
+            >
+              Connect to a Trezor
             </SharedButton>
           </li>
         )}

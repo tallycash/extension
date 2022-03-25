@@ -3,6 +3,7 @@ import { Provider } from "react-redux"
 import { HashRouter, Route, Switch } from "react-router-dom"
 import { Store } from "webext-redux"
 import Ledger from "./Ledger/Ledger"
+import Trezor from "./Trezor/Trezor"
 import TabNotFound from "./TabNotFound"
 
 /**
@@ -17,6 +18,9 @@ export default function Tab({ store }: { store: Store }): ReactElement {
           <Switch>
             <Route path="/ledger" exact>
               <Ledger />
+            </Route>
+            <Route path="/trezor" exact>
+              <Trezor />
             </Route>
             <Route>
               <TabNotFound />

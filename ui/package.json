@@ -45,6 +45,7 @@
     "react-router-dom": "^5.3.0",
     "react-transition-group": "^4.4.2",
     "redux": "^4.1.0",
+    "trezor-connect": "^8.2.7",
     "webextension-polyfill": "^0.8.0"
   },
   "devDependencies": {

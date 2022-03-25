@@ -52,6 +52,7 @@
     "ethers": "^5.5.1",
     "node-fetch": "^2.6.1",
     "siwe": "^1.1.0",
+    "trezor-connect": "^8.2.7",
     "util": "^0.12.4",
     "webextension-polyfill": "^0.8.0"
   },
