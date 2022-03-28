@@ -1,5 +1,4 @@
-import React, { ReactElement, useState } from "react"
-import { isAddress } from "@ethersproject/address"
+import React, { ReactElement, useEffect, useState } from "react"
 import {
   selectCurrentAccount,
   selectCurrentAccountBalances,
@@ -13,6 +12,8 @@ import {
   updateTransactionOptions,
 } from "@tallyho/tally-background/redux-slices/transaction-construction"
 import { utils } from "ethers"
+import { selectAccountNetwork } from "@tallyho/tally-background/redux-slices/ui"
+import { isValidAddress } from "@tallyho/tally-background/lib/utils"
 import {
   FungibleAsset,
   isFungibleAssetAmount,
@@ -39,10 +40,13 @@ export default function Send(): ReactElement {
   const [amount, setAmount] = useState("")
   const [gasLimit, setGasLimit] = useState<bigint | undefined>(undefined)
   const [hasError, setHasError] = useState(false)
+  const [addressWarning, setAddressWarning] = useState<string | null>(null)
+  const [addressError, setAddressError] = useState<string | null>(null)
   const [networkSettingsModalOpen, setNetworkSettingsModalOpen] =
     useState(false)
 
   const estimatedFeesPerGas = useBackgroundSelector(selectEstimatedFeesPerGas)
+  const selectedNetwork = useBackgroundSelector(selectAccountNetwork)
 
   const dispatch = useBackgroundDispatch()
   const currentAccount = useBackgroundSelector(selectCurrentAccount)
@@ -87,16 +91,45 @@ export default function Send(): ReactElement {
   const assetAmount = assetAmountFromForm()
 
   const sendTransactionRequest = async () => {
+    let from = currentAccount.address
+    let to = destinationAddress
+
+    if (currentAccount.network.checksum === "EIP-1191") {
+      from = currentAccount.address.toLowerCase()
+      to = destinationAddress.toLowerCase()
+    }
+
     dispatch(broadcastOnSign(true))
     const transaction = {
-      from: currentAccount.address,
-      to: destinationAddress,
+      from,
+      to,
       // eslint-disable-next-line no-underscore-dangle
       value: BigInt(utils.parseEther(amount?.toString())._hex),
       gasLimit,
     }
     return dispatch(updateTransactionOptions(transaction))
   }
+
+  useEffect(() => {
+    if (
+      destinationAddress.match(/^(0x)?[0-9A-F]{40}$/) ||
+      destinationAddress.match(/^(0x)?[0-9a-f]{40}$/)
+    ) {
+      setAddressError(null)
+      return setAddressWarning("Address is not mixed-case")
+    }
+
+    if (
+      destinationAddress !== "" &&
+      !isValidAddress(destinationAddress, selectedNetwork)
+    ) {
+      setAddressWarning(null)
+      return setAddressError("Bad checksum address")
+    }
+
+    setAddressError(null)
+    return setAddressWarning(null)
+  }, [destinationAddress, selectedNetwork])
 
   const networkSettingsSaved = (networkSetting: NetworkFeeSettings) => {
     setGasLimit(networkSetting.gasLimit)
@@ -142,9 +175,15 @@ export default function Send(): ReactElement {
               id="send_address"
               type="text"
               placeholder="0x..."
-              spellCheck={false}
+              spellCheck={!addressError}
               onChange={(event) => setDestinationAddress(event.target.value)}
             />
+            {addressError && (
+              <div className="error_message">{addressError}</div>
+            )}
+            {addressWarning && (
+              <div className="warning_message">{addressWarning}</div>
+            )}
           </div>
           <SharedSlideUpMenu
             size="custom"
@@ -168,11 +207,7 @@ export default function Send(): ReactElement {
             <SharedButton
               type="primary"
               size="large"
-              isDisabled={
-                Number(amount) === 0 ||
-                !isAddress(destinationAddress) ||
-                hasError
-              }
+              isDisabled={Number(amount) === 0 || !!addressError || hasError}
               linkTo={{
                 pathname: "/sign-transaction",
                 state: {
@@ -248,6 +283,7 @@ export default function Send(): ReactElement {
             flex-direction: column;
             align-items: flex-start;
             justify-content: space-between;
+            position: relative;
           }
           div.send_to_field label {
             color: var(--green-40);
@@ -267,6 +303,21 @@ export default function Send(): ReactElement {
             border-radius: 4px;
             background-color: var(--green-95);
             padding: 0px 16px;
+          }
+          .error_message,
+          .warning_message {
+            font-weight: 500;
+            position: absolute;
+            left: 16px;
+            bottom: 3px;
+            font-size: 14px;
+            line-height: 20px;
+          }
+          .error_message {
+            color: var(--error);
+          }
+          .warning_message {
+            color: var(--trophy-gold);
           }
           .send_footer {
             display: flex;

@@ -1,7 +1,8 @@
 import { BigNumber, ethers, utils } from "ethers"
 import { normalizeHexAddress } from "@tallyho/hd-keyring"
+import keccak from "keccak"
 import { HexString } from "../../types"
-import { EVMNetwork } from "../../networks"
+import { EVMNetwork, Network } from "../../networks"
 import { ETHEREUM, ROPSTEN, RINKEBY, GOERLI, KOVAN } from "../../constants"
 
 export function normalizeEVMAddress(address: string | Buffer): HexString {
@@ -141,6 +142,41 @@ export const numberTo32BytesHex = (value: string, decimals: number): string => {
 
 export const isMaxUint256 = (amount: BigNumber | bigint | string): boolean => {
   return ethers.BigNumber.from(amount).eq(ethers.constants.MaxUint256)
+}
+
+export function toEIP1191ChecksumAddress(
+  address: string,
+  chainId: string
+): string {
+  const account =
+    address.substring(0, 2) === "0x" ? address.substring(2) : address
+
+  const chain = chainId && parseInt(chainId, 10)
+  const prefix = !Number.isNaN(chain) ? `${chain?.toString()}0x` : ""
+  const hash = keccak("keccak256").update(`${prefix}${account}`).digest("hex")
+
+  return `0x${account
+    .split("")
+    .map((char: string, index: number) =>
+      parseInt(hash[index], 16) >= 8 ? char.toUpperCase() : char
+    )
+    .join("")}`
+}
+
+export function isEIP1191Address(address: string, chainId: string): boolean {
+  return (
+    utils.isHexString(address) &&
+    toEIP1191ChecksumAddress(address, chainId) === address
+  )
+}
+
+export function isValidAddress(address: string, network: Network): boolean {
+  if (network.checksum === "EIP-1191") {
+    return isEIP1191Address(address, network.chainID || "30")
+  }
+
+  // TODO Add bitcoin address checksum
+  return utils.isAddress(address)
 }
 
 /**

@@ -31,6 +31,17 @@ export const ETH: FungibleAsset = {
   },
 }
 
+export const RBTC: FungibleAsset = {
+  name: "Smart Bitcoin",
+  symbol: "RBTC",
+  decimals: 18,
+  metadata: {
+    coinGeckoID: "rootstock",
+    tokenLists: [],
+    websiteURL: "https://rsk.co",
+  },
+}
+
 export const BTC: FungibleAsset = {
   name: "Bitcoin",
   symbol: "BTC",

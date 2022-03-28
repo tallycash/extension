@@ -50,6 +50,7 @@
     "dexie": "^3.0.3",
     "emittery": "^0.9.2",
     "ethers": "^5.5.1",
+    "keccak": "^3.0.2",
     "node-fetch": "^2.6.1",
     "siwe": "^1.1.0",
     "util": "^0.12.4",
@@ -57,6 +58,7 @@
   },
   "devDependencies": {
     "@reduxjs/toolkit": "^1.6.1",
+    "@types/keccak": "^3.0.1",
     "@types/webextension-polyfill": "^0.8.0",
     "crypto-browserify": "^3.12.0",
     "mockzilla": "^0.12.0",
