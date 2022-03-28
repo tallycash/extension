@@ -1,4 +1,5 @@
 import { connectLedger } from "@tallyho/tally-background/redux-slices/ledger"
+import TransportWebAuthn from "@ledgerhq/hw-transport-webauthn"
 import React, { ReactElement, useState } from "react"
 import { ledgerUSBVendorId } from "@ledgerhq/devices"
 import { LedgerProductDatabase } from "@tallyho/tally-background/services/ledger"
@@ -42,13 +43,26 @@ export default function Ledger(): ReactElement {
           initialScreen={phase === "0-prepare"}
           deviceCount={usbDeviceCount}
           onContinue={async () => {
-            setPhase("1-request")
+            // setPhase("1-request")
             try {
+              // wutwutwutf
               // Open popup for testing
               // TODO: use result (for multiple devices)?
-              await navigator.usb.requestDevice({
-                filters,
-              })
+              // const transport = await TransportWebAuthn.create()
+              // transport.setScrambleKey("w0w")
+              // const r = await transport.send(0xb0, 0x01, 0x00, 0x00)
+              // console.log(r)
+              // let i = 0
+              // for (; i < r.length; ) {
+              //   const format = r[i++]
+              //   console.log("i: ", i)
+              //   console.log("format: ", format)
+              // }
+              // console.log("t-pp")
+              // await navigator.usb.requestDevice({
+              //   filters,
+              // })
+              await new Promise((resolve) => setTimeout(resolve, 1000))
             } catch {
               // Timeout is needed to respond to clicks to,
               // e.g., "I don't see my device".
@@ -60,7 +74,7 @@ export default function Ledger(): ReactElement {
               // connectLedger fail later.
             }
 
-            setPhase("2-connect")
+            // setPhase("2-connect")
 
             setConnecting(true)
             try {

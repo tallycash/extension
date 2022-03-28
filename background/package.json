@@ -36,6 +36,7 @@
     "@ledgerhq/errors": "^6.10.0",
     "@ledgerhq/hw-app-eth": "^6.23.0",
     "@ledgerhq/hw-transport": "^6.20.0",
+    "@ledgerhq/hw-transport-webauthn": "^5.36.0-deprecated",
     "@ledgerhq/hw-transport-webusb": "^6.20.0",
     "@tallyho/hd-keyring": "^0.3.3",
     "@tallyho/provider-bridge-shared": "0.0.1",
@@ -56,6 +57,7 @@
     "webextension-polyfill": "^0.8.0"
   },
   "devDependencies": {
+    "@ledgerhq/hw-transport-webauthn": "^5.36.0-deprecated",
     "@reduxjs/toolkit": "^1.6.1",
     "@types/webextension-polyfill": "^0.8.0",
     "crypto-browserify": "^3.12.0",

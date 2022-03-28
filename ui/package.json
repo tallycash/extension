@@ -29,6 +29,7 @@
     "@ethersproject/units": "5.5.0",
     "@ethersproject/web": "^5.5.1",
     "@ledgerhq/devices": "^6.20.0",
+    "@ledgerhq/hw-transport-webauthn": "^5.36.0-deprecated",
     "@reduxjs/toolkit": "^1.6.0",
     "@tallyho/provider-bridge-shared": "0.0.1",
     "@tallyho/tally-background": "0.0.1",

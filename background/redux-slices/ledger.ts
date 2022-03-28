@@ -1,3 +1,4 @@
+import Transport from "@ledgerhq/hw-transport"
 import { createSlice } from "@reduxjs/toolkit"
 import { ETH } from "../constants"
 import { createBackgroundAsyncThunk } from "./utils"
@@ -205,6 +206,8 @@ export const connectLedger = createBackgroundAsyncThunk(
   "ledger/connectLedger",
   async (unused, { dispatch, extra: { main } }) => {
     const deviceID = await main.connectLedger()
+    // console.log("deviceID")
+    // console.log(deviceID)
     if (!deviceID) {
       return
     }
