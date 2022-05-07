@@ -13,6 +13,7 @@ import {
   normalizeEVMAddress,
   sameEVMAddress,
 } from "@tallyho/tally-background/lib/utils"
+import { SigningMethod } from "@tallyho/tally-background/redux-slices/signing"
 import SharedButton from "../Shared/SharedButton"
 import {
   useBackgroundDispatch,
@@ -48,16 +49,18 @@ const walletTypeDetails: { [key in AccountType]: WalletTypeInfo } = {
 
 function WalletTypeHeader({
   accountType,
-  onClickAddAddress,
+  signingMethod,
   walletNumber,
 }: {
   accountType: AccountType
-  onClickAddAddress?: () => void
+  signingMethod: SigningMethod | null
   walletNumber?: number
 }) {
   const { title, icon } = walletTypeDetails[accountType]
   const history = useHistory()
   const areKeyringsUnlocked = useAreKeyringsUnlocked(false)
+  const dispatch = useBackgroundDispatch()
+  const haveAddAddress = !!signingMethod
 
   return (
     <>
@@ -66,17 +69,29 @@ function WalletTypeHeader({
           <div className="icon" />
           {title} {accountType !== AccountType.ReadOnly ? walletNumber : null}
         </h2>
-        {onClickAddAddress ? (
+        {haveAddAddress ? (
           <div className="right">
             <SharedButton
               type="tertiaryGray"
               size="small"
               iconSmall="add"
               onClick={() => {
-                if (areKeyringsUnlocked) {
-                  onClickAddAddress()
-                } else {
-                  history.push("/keyring/unlock")
+                switch (signingMethod.type) {
+                  case "keyring":
+                    if (areKeyringsUnlocked) {
+                      if (signingMethod.keyringID) {
+                        dispatch(deriveAddress(signingMethod.keyringID))
+                      }
+                    } else {
+                      history.push("/keyring/unlock")
+                    }
+                    break
+                  case "ledger":
+                    window.open("/tab.html#/ledger", "_blank")?.focus()
+                    window.close()
+                    break
+                  default:
+                    break
                 }
               }}
             >
@@ -95,7 +110,7 @@ function WalletTypeHeader({
         }
         .wallet_title > h2 {
           color: #fff;
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 600;
           line-height: 24px;
           padding: 0px 12px 0px 16px;
@@ -189,14 +204,25 @@ export default function AccountsNotificationPanelAccounts({
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const accountTotalsByType = accountTotals[accountType]!.reduce(
             (acc, accountTypeTotal) => {
-              if (accountTypeTotal.keyringId) {
-                acc[accountTypeTotal.keyringId] ??= []
-                // Known-non-null due to above ??=
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                acc[accountTypeTotal.keyringId].push(accountTypeTotal)
-              } else {
-                acc.readOnly ??= []
-                acc.readOnly.push(accountTypeTotal)
+              switch (accountTypeTotal.signingMethod?.type) {
+                case "keyring":
+                  if (accountTypeTotal.keyringId) {
+                    acc[accountTypeTotal.keyringId] ??= []
+                    // Known-non-null due to above ??=
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    acc[accountTypeTotal.keyringId].push(accountTypeTotal)
+                  }
+                  break
+                case "ledger":
+                  acc[accountTypeTotal.signingMethod.deviceID] ??= []
+                  acc[accountTypeTotal.signingMethod.deviceID].push(
+                    accountTypeTotal
+                  )
+                  break
+                default:
+                  acc.readOnly ??= []
+                  acc.readOnly.push(accountTypeTotal)
+                  break
               }
               return acc
             },
@@ -204,28 +230,16 @@ export default function AccountsNotificationPanelAccounts({
           )
 
           return Object.values(accountTotalsByType).map(
-            (accountTotalsByKeyringId, idx) => {
+            (accountTotalsById, idx) => {
               return (
                 <section key={accountType}>
                   <WalletTypeHeader
                     accountType={accountType}
                     walletNumber={idx + 1}
-                    onClickAddAddress={
-                      accountType === "imported" || accountType === "internal"
-                        ? () => {
-                            if (accountTotalsByKeyringId[0].keyringId) {
-                              dispatch(
-                                deriveAddress(
-                                  accountTotalsByKeyringId[0].keyringId
-                                )
-                              )
-                            }
-                          }
-                        : undefined
-                    }
+                    signingMethod={accountTotalsById[0].signingMethod}
                   />
                   <ul>
-                    {accountTotalsByKeyringId.map((accountTotal) => {
+                    {accountTotalsById.map((accountTotal) => {
                       const normalizedAddress = normalizeEVMAddress(
                         accountTotal.address
                       )

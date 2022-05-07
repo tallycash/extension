@@ -7,6 +7,11 @@ export const selectKeyringStatus = createSelector(
   (status) => status
 )
 
+export const selectKeyrings = createSelector(
+  (state: RootState) => state.keyrings.keyrings,
+  (keyrings) => keyrings
+)
+
 export const selectKeyringByAddress = (
   address: string
 ): OutputSelector<
