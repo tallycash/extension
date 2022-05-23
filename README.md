@@ -332,14 +332,47 @@ ui/ # @tallyho/tally-ui package
 
 Firefox requires to upload source code if minifier is used and to be able to compile identical output to the uploaded package. Our builds are environment dependent at the moment because of the minification and source map process. Long term solution will be to upgrade our build process to be able to produce identical file assets, but until then we use Docker.
 
+### Prepare source zip
+
 - install and setup docker: https://docs.docker.com/get-docker/
 - git clone git@github.com:tallycash/extension.git tallyho-firefox
 - cd tallyho-firefox
 - git checkout tags/latest_release-tag
 - .env.prod: fill in the prod API keys
-- `./firefox-build.sh`
-- mv firefox.zip ../
-- git clean -fdx
 - rm -rf .git
+- zip -r ff-source.zip .
+- mv ff-source.zip ../
 - cd ..
-- zip -r tallyho-firefox.zip tallyho-firefox
+
+### Create actual build
+
+- mkdir build
+- cp ff-source.zip build
+- cd build
+- unzip ff-source.zip
+- rm ff-source.zip
+- ./firefox-build.sh
+- mv firefox.zip ../ff-build.zip
+
+### Firefox notes to reviewer
+
+Docker is required for this build to work
+
+Steps to build the extension
+
+- mkdir build
+- cp ff-source.zip build
+- cd build
+- unzip ff-source.zip
+- rm ff-source.zip
+- ./firefox-build.sh
+
+- mkdir out
+- cp firefox.zip out
+- cd out
+- unzip firefox.zip
+- rm firefox.zip
+- diff ./ /path/to/downloaded/and/unzip/extension
+
+The firefox.zip is the extension code that I have submitted and used, so they should be the same.
+I have tried the above method a couple of times and it resulted in an empty diff so it should be good to go.
