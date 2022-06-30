@@ -45,7 +45,10 @@ export default function SignTransactionContainer({
   const [isOnDelayToSign, setIsOnDelayToSign] = useState(true)
   const [focusChangeNonce, setFocusChangeNonce] = useState(0)
 
-  const signingLedgerState = useSigningLedgerState(accountSigner ?? null)
+  const signingLedgerState = useSigningLedgerState(
+    signerAccountTotal?.address,
+    accountSigner ?? null
+  )
 
   const isLedgerSigning = accountSigner?.type === "ledger"
   const isWaitingForHardware = isLedgerSigning && isTransactionSigning
@@ -173,7 +176,7 @@ export default function SignTransactionContainer({
         )}
         {signingLedgerState?.state === "wrong-ledger-connected" && (
           <SignTransactionWrongLedgerConnected
-            signerAccountTotal={signerAccountTotal}
+            requiredAddress={signingLedgerState.requiredAddress}
           />
         )}
         {signingLedgerState?.state === "multiple-ledgers-connected" && (

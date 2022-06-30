@@ -88,8 +88,8 @@ type Events = ServiceLifecycleEvents & {
 
 export const idDerivationPath = "44'/60'/0'/0/0"
 
-async function deriveAddressOnLedger(path: string, eth: Eth) {
-  const derivedIdentifiers = await eth.getAddress(path)
+async function deriveAddressOnLedger(derivationPath: string, eth: Eth) {
+  const derivedIdentifiers = await eth.getAddress(derivationPath)
   const address = ethersGetAddress(derivedIdentifiers.address)
   return address
 }
@@ -131,7 +131,7 @@ async function generateLedgerId(
  * To do so, it does:
  *   - serialize the calls to the critical resource (ie. Ledger)
  *   - acts when a paired device is (dis-)connected
- *   - supports address derivation from BIP32 paths
+ *   - supports address derivation from BIP32 derivation paths
  *   - supports transaction signing
  *   - supports typed data signing
  *   - maps the successfully onboarded addresses to their derivation paths
@@ -320,12 +320,16 @@ export default class LedgerService extends BaseService<Events> {
     })
   }
 
-  async saveAddress(path: HexString, address: string): Promise<void> {
+  async saveAddress(derivationPath: HexString, address: string): Promise<void> {
     if (!this.#currentLedgerId) {
       throw new Error("No Ledger id is set!")
     }
 
-    await this.db.addAccount({ ledgerId: this.#currentLedgerId, path, address })
+    await this.db.addAccount({
+      ledgerId: this.#currentLedgerId,
+      path: derivationPath,
+      address,
+    })
   }
 
   async signTransaction(
@@ -474,12 +478,12 @@ export default class LedgerService extends BaseService<Events> {
 
   private checkCanSign(
     accountData: LedgerAccount | null,
-    path: string,
+    derivationPath: string,
     deviceID: string
   ) {
     if (
       !accountData ||
-      path !== accountData.path ||
+      derivationPath !== accountData.path ||
       deviceID !== accountData.ledgerId
     ) {
       throw new Error("Signing method mismatch!")

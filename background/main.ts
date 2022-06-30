@@ -632,13 +632,10 @@ export default class Main extends BaseService<never> {
 
     transactionConstructionSliceEmitter.on(
       "requestSignature",
-      async ({ transaction, accountSigner }) => {
+      async ({ request, accountSigner }) => {
         try {
           const signedTransactionResult =
-            await this.signingService.signTransaction(
-              transaction,
-              accountSigner
-            )
+            await this.signingService.signTransaction(request, accountSigner)
           await this.store.dispatch(transactionSigned(signedTransactionResult))
         } catch (exception) {
           logger.error("Error signing transaction", exception)

@@ -23,6 +23,7 @@ import {
 
 import { createBackgroundAsyncThunk } from "./utils"
 import { AccountSigner } from "../services/signing"
+import { SignOperation } from "./signing"
 
 export const enum TransactionConstructionStatus {
   Idle = "idle",
@@ -84,14 +85,9 @@ export const initialState: TransactionConstruction = {
   lastGasEstimatesRefreshed: Date.now(),
 }
 
-export type SignatureRequest = {
-  transaction: EIP1559TransactionRequest
-  accountSigner: AccountSigner
-}
-
 export type Events = {
   updateTransaction: EnrichedEVMTransactionSignatureRequest
-  requestSignature: SignatureRequest
+  requestSignature: SignOperation<EIP1559TransactionRequest>
   signatureRejected: never
   broadcastSignedTransaction: SignedEVMTransaction
 }
@@ -151,9 +147,9 @@ export const updateTransactionData = createBackgroundAsyncThunk(
 
 export const signTransaction = createBackgroundAsyncThunk(
   "transaction-construction/sign",
-  async (request: SignatureRequest) => {
+  async (request: SignOperation<EIP1559TransactionRequest>) => {
     if (USE_MAINNET_FORK) {
-      request.transaction.chainID = FORK.chainID
+      request.request.chainID = FORK.chainID
     }
 
     await emitter.emit("requestSignature", request)

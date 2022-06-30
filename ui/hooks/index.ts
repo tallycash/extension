@@ -1,6 +1,9 @@
+import { ReactFragment } from "react"
+
 import { isAllowedQueryParamPage } from "@tallyho/provider-bridge-shared"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, ReactElement, ReactNode } from "react"
+import SharedPanelSwitcher from "../components/Shared/SharedPanelSwitcher"
 
 export * from "./redux-hooks"
 export * from "./signing-hooks"
@@ -45,4 +48,22 @@ export function useSkipFirstRenderEffect(
     // We are passing in the dependencies when we initialize this hook, so we can not know what it will be exactly and it's ok.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps)
+}
+
+type PanelDescriptor = {
+  name: string
+  panelElement: ReactElement
+}
+
+export function useSwitchablePanels(panels: PanelDescriptor[]): ReactNode {
+  const [panelNumber, setPanelNumber] = useState(0)
+
+  return [
+    SharedPanelSwitcher({
+      setPanelNumber,
+      panelNumber,
+      panelNames: panels.map(({ name }) => name),
+    }),
+    panels[panelNumber].panelElement,
+  ]
 }

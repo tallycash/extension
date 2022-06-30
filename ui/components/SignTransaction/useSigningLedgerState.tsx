@@ -1,21 +1,23 @@
+import { assertUnreachable } from "@tallyho/tally-background/lib/utils/type-guards"
 import { AccountSigner } from "@tallyho/tally-background/services/signing"
+import { HexString } from "@tallyho/tally-background/types"
 import { useBackgroundSelector } from "../../hooks"
 
 export type SigningLedgerState =
   | {
-      state:
-        | "no-ledger-connected"
-        | "wrong-ledger-connected"
-        | "busy"
-        | "multiple-ledgers-connected"
+      state: "no-ledger-connected" | "busy" | "multiple-ledgers-connected"
     }
+  | { state: "wrong-ledger-connected"; requiredAddress: HexString }
   | { state: "available"; arbitraryDataEnabled: boolean }
 
 export function useSigningLedgerState(
+  signingAddress: HexString | undefined,
   accountSigner: AccountSigner | null
 ): SigningLedgerState | null {
   return useBackgroundSelector((state) => {
-    if (accountSigner?.type !== "ledger") return null
+    if (signingAddress === undefined || accountSigner?.type !== "ledger") {
+      return null
+    }
 
     const { deviceID } = accountSigner
 
@@ -37,9 +39,12 @@ export function useSigningLedgerState(
       case "busy":
         return { state: "busy" }
       case "disconnected":
-        return { state: "wrong-ledger-connected" }
+        return {
+          state: "wrong-ledger-connected",
+          requiredAddress: signingAddress,
+        }
       default:
-        throw new Error("unreachable")
+        return assertUnreachable(device.status)
     }
   })
 }

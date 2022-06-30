@@ -1,15 +1,15 @@
+import {truncateAddress} from "@tallyho/tally-background/lib/utils"
 import { AccountTotal } from "@tallyho/tally-background/redux-slices/selectors"
+import {HexString} from "@tallyho/tally-background/types"
 import React, { ReactElement } from "react"
 import SharedButton from "../Shared/SharedButton"
 import SignTransactionSlideUpContentLayout from "./SignTransactionSlideUpContentLayout"
 
 export default function SignTransactionWrongLedgerConnected({
-  signerAccountTotal,
+  requiredAddress,
 }: {
-  signerAccountTotal?: AccountTotal
+  requiredAddress: HexString
 }): ReactElement {
-  const address = signerAccountTotal?.address ?? ""
-
   return (
     <SignTransactionSlideUpContentLayout
       title="Wrong Ledger"
@@ -25,11 +25,14 @@ export default function SignTransactionWrongLedgerConnected({
                 type="deemphasizedWhite"
                 onClick={() => {
                   window
-                    .open(`https://etherscan.io/address/${address}`, "_blank")
+                    .open(
+                      `https://etherscan.io/address/${requiredAddress}`,
+                      "_blank"
+                    )
                     ?.focus()
                 }}
               >
-                {`${address.slice(0, 7)}...${address.slice(-6)}`}
+                {truncateAddress(requiredAddress)}
               </SharedButton>
             </div>
           </div>

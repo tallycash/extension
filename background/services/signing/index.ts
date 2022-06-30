@@ -36,12 +36,21 @@ type Events = ServiceLifecycleEvents & {
 }
 
 /**
+ * An AccountSigner that represents a read-only account. Read-only accounts
+ * generally cannot sign.
+ */
+export const ReadOnlyAccountSigner = { type: "read-only" } as const
+
+/**
  * An AccountSigner carries the appropriate information for a given signer to
  * act on a signing request. The `type` field always carries the signer type,
  * but the rest of the object is signer-specific and should be treated as
  * opaque outside of the specific signer's service.
  */
-export type AccountSigner = KeyringAccountSigner | HardwareAccountSigner
+export type AccountSigner =
+  | typeof ReadOnlyAccountSigner
+  | KeyringAccountSigner
+  | HardwareAccountSigner
 export type HardwareAccountSigner = LedgerAccountSigner
 
 export type SignerType = AccountSigner["type"]
@@ -129,6 +138,8 @@ export default class SigningService extends BaseService<Events> {
           },
           transactionWithNonce
         )
+      case "read-only":
+        throw new Error("Read-only signers cannot sign.")
       default:
         return assertUnreachable(accountSigner)
     }
@@ -145,6 +156,9 @@ export default class SigningService extends BaseService<Events> {
         break
       case "ledger":
         // @TODO Implement removal of ledger accounts.
+        break
+      case "read-only":
+        this.chainService.removeAccountToTrack(address)
         break
       default:
         assertUnreachable(signerType)
@@ -228,8 +242,10 @@ export default class SigningService extends BaseService<Events> {
             account: account.address,
           })
           break
+        case "read-only":
+          throw new Error("Read-only signers cannot sign.")
         default:
-          throw new Error(`Unreachable!`)
+          assertUnreachable(accountSigner)
       }
       this.emitter.emit("signingDataResponse", {
         type: "success-data",
@@ -268,6 +284,8 @@ export default class SigningService extends BaseService<Events> {
             account: addressOnNetwork.address,
           })
           break
+        case "read-only":
+          throw new Error("Read-only signers cannot sign.")
         default:
           assertUnreachable(accountSigner)
       }

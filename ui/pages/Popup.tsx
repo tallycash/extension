@@ -35,6 +35,7 @@ import CorePage from "../components/Core/CorePage"
 import ErrorFallback from "./ErrorFallback"
 
 import pageList from "../routes/routes"
+import {USE_UPDATED_SIGNING_UI} from "@tallyho/tally-background/features"
 
 const pagePreferences = Object.fromEntries(
   pageList.map(({ path, hasTabBar, hasTopBar, persistOnClose }) => [
@@ -62,7 +63,10 @@ function transformLocation(
   }
 
   if (isTransactionPendingSignature) {
-    pathname = needsKeyringUnlock ? "/keyring/unlock" : "/sign-transaction"
+    pathname =
+      !USE_UPDATED_SIGNING_UI && needsKeyringUnlock
+        ? "/keyring/unlock"
+        : "/sign-transaction"
   }
 
   return {

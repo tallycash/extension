@@ -20,6 +20,8 @@ import SignTransactionContainer from "../components/SignTransaction/SignTransact
 import SignTransactionInfoProvider from "../components/SignTransaction/SignTransactionInfoProvider"
 import SignTransactionPanelSwitcher from "../components/SignTransaction/SignTransactionPanelSwitcher"
 import SignTransactionPanelCombined from "../components/SignTransaction/SignTransactionPanelCombined"
+import {USE_UPDATED_SIGNING_UI} from "@tallyho/tally-background/features"
+import {Signing} from "../components/Signing"
 
 export default function SignTransaction(): ReactElement {
   const dispatch = useBackgroundDispatch()
@@ -46,6 +48,12 @@ export default function SignTransaction(): ReactElement {
 
   const isLocked = useIsSignerLocked(accountSigner)
 
+  if (USE_UPDATED_SIGNING_UI) {
+    return (
+      <Signing accountSigner={accountSigner} request={transactionDetails} />
+    )
+  }
+
   if (isLocked) return <></>
 
   const handleReject = async () => {
@@ -59,7 +67,7 @@ export default function SignTransaction(): ReactElement {
     ) {
       dispatch(
         signTransaction({
-          transaction: transactionDetails,
+          request: transactionDetails,
           accountSigner,
         })
       )

@@ -10,3 +10,5 @@ export const MULTI_NETWORK =
   SUPPORT_POLYGON || SUPPORT_ARBITRUM || SUPPORT_OPTIMISM
 export const CUSTOM_GAS_SELECT = process.env.CUSTOM_GAS_SELECT === "true"
 export const HIDE_TOKEN_FEATURES = process.env.HIDE_TOKEN_FEATURES === "true"
+export const USE_UPDATED_SIGNING_UI =
+  process.env.USE_UPDATED_SIGNING_UI === "true"

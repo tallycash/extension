@@ -1,3 +1,4 @@
+import {USE_UPDATED_SIGNING_UI} from "@tallyho/tally-background/features"
 import {
   getAccountTotal,
   selectCurrentAccountSigner,
@@ -9,6 +10,7 @@ import {
 } from "@tallyho/tally-background/redux-slices/signing"
 import React, { ReactElement, useState } from "react"
 import { useHistory } from "react-router-dom"
+import {Signing} from "../components/Signing"
 import SignTransactionContainer from "../components/SignTransaction/SignTransactionContainer"
 import {
   useBackgroundDispatch,
@@ -39,6 +41,20 @@ export default function SignData(): ReactElement {
   const [isTransactionSigning, setIsTransactionSigning] = useState(false)
 
   const isLocked = useIsSignerLocked(currentAccountSigner)
+
+  if (USE_UPDATED_SIGNING_UI) {
+    if (currentAccountSigner === null || typedDataRequest === undefined) {
+      return <></>
+    }
+
+    return (
+      <Signing
+        accountSigner={currentAccountSigner}
+        request={typedDataRequest}
+      />
+    )
+  }
+
   if (isLocked) return <></>
 
   const handleConfirm = () => {
