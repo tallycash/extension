@@ -153,6 +153,51 @@ const reduxCache: Middleware = (store) => (next) => (action) => {
   return result
 }
 
+const debounceThrottle = (
+  originalListener: () => void,
+  debounceTimeMs = 100,
+  throttleTimeMs = 250
+): (() => void) => {
+  let debounceTimer: NodeJS.Timeout | undefined
+  let timeOfLastCall: number
+
+  return () => {
+    const initDebounceTimer = () => {
+      if (debounceTimer) clearTimeout(debounceTimer)
+      debounceTimer = undefined
+
+      debounceTimer = setTimeout(() => {
+        console.log(">> debounce time up send", Date.now() - timeOfLastCall)
+
+        if (debounceTimer) clearTimeout(debounceTimer)
+        debounceTimer = undefined
+
+        timeOfLastCall = Date.now()
+        originalListener()
+      }, debounceTimeMs)
+    }
+
+    const callOriginalListener = () => {
+      timeOfLastCall = Date.now()
+      originalListener()
+    }
+
+    if (!debounceTimer || Date.now() - timeOfLastCall >= throttleTimeMs) {
+      if (!debounceTimer) {
+        console.log(">> init send", Date.now() - timeOfLastCall)
+      } else {
+        console.log(">> throttle send", Date.now() - timeOfLastCall)
+      }
+
+      // 🚀 We want to force a send outside of the debounce timer if it's the first call
+      // or more than throttleTimeMs has gone since last call
+      callOriginalListener()
+    }
+    console.log("reset", Date.now() - timeOfLastCall)
+    initDebounceTimer()
+  }
+}
+
 // Declared out here so ReduxStoreType can be used in Main.store type
 // declaration.
 const initializeStore = (preloadedState = {}, main: Main) =>
@@ -184,8 +229,17 @@ const initializeStore = (preloadedState = {}, main: Main) =>
       return middleware
     },
     devTools: false,
-    enhancers:
-      process.env.NODE_ENV === "development"
+    enhancers: [
+      (createStore) => (reducer, initialState) => {
+        const store: any = createStore(reducer, initialState)
+        const originalSubscribe = store.subscribe
+
+        store.subscribe = (listener: any) => {
+          return originalSubscribe(debounceThrottle(listener))
+        }
+        return store
+      },
+      ...(process.env.NODE_ENV === "development"
         ? [
             devToolsEnhancer({
               hostname: "localhost",
@@ -195,7 +249,8 @@ const initializeStore = (preloadedState = {}, main: Main) =>
               stateSanitizer: devToolsSanitizer,
             }),
           ]
-        : [],
+        : []),
+    ],
   })
 
 type ReduxStoreType = ReturnType<typeof initializeStore>
