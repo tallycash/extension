@@ -17,7 +17,7 @@ import {
   addressBookResolverFor,
   ensResolverFor,
   unsResolver,
-  rnsResolver,
+  rnsResolver, idrissResolver,
 } from "./resolvers"
 import PreferenceService from "../preferences"
 import { isFulfilledPromise } from "../../lib/utils/type-guards"
@@ -126,6 +126,7 @@ export default class NameService extends BaseService<Events> {
       // for the given resource.
       ensResolverFor(chainService),
       unsResolver(),
+      idrissResolver(),
       ...(RESOLVE_RNS_NAMES ? [rnsResolver()] : []),
     ]
 

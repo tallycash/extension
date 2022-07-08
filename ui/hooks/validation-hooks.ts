@@ -136,7 +136,7 @@ export const useParsedValidation = <T>(
  * strings are resolved asynchronously.
  */
 export const useAddressOrNameValidation: AsyncValidationHook<
-  { address: HexString; name?: string } | undefined
+  { address: HexString; name?: string, alternative?: { name: string; address: string }[] } | undefined
 > = (onValidChange) => {
   const [errorMessage, setErrorMessage] = useState<string | undefined>()
   const [rawValue, setRawValue] = useState<string>("")
@@ -173,7 +173,8 @@ export const useAddressOrNameValidation: AsyncValidationHook<
             onValidChange(undefined)
             setErrorMessage("Address could not be found")
           } else {
-            onValidChange({ name: trimmed, address: resolved.address })
+            console.log('resolved',resolved)
+            onValidChange({ name: trimmed, address: resolved.address, alternative: resolved.alternative })
           }
 
           setIsValidating(false)

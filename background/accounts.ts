@@ -41,6 +41,7 @@ export type AccountBalance = {
 export type AddressOnNetwork = {
   address: HexString
   network: EVMNetwork
+  alternative?: { name: string; address: string }[]
 }
 
 /**

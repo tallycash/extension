@@ -54,7 +54,8 @@
     "react": "^17.0.2",
     "webext-options-sync": "^2.0.1",
     "webext-redux": "^2.1.7",
-    "webextension-polyfill": "^0.7.0"
+    "webextension-polyfill": "^0.7.0",
+    "idriss-crypto": "^1.6.0"
   },
   "devDependencies": {
     "@babel/core": "^7.13.1",

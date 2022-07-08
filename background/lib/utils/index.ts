@@ -12,10 +12,12 @@ export function normalizeEVMAddress(address: string | Buffer): HexString {
 export function normalizeAddressOnNetwork({
   address,
   network,
+  alternative,
 }: AddressOnNetwork): AddressOnNetwork {
   return {
     address: normalizeEVMAddress(address),
     network,
+    alternative,
   }
 }
 
