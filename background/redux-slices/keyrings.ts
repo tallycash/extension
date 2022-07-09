@@ -38,13 +38,17 @@ interface ImportKeyring {
   mnemonic: string
   source: "internal" | "import"
   path?: string
+  passphrase?: string
 }
 
 // Async thunk to bubble the importKeyring action from  store to emitter.
 export const importKeyring = createBackgroundAsyncThunk(
   "keyrings/importKeyring",
-  async ({ mnemonic, source, path }: ImportKeyring, { getState, dispatch }) => {
-    await emitter.emit("importKeyring", { mnemonic, path, source })
+  async (
+    { mnemonic, source, path, passphrase }: ImportKeyring,
+    { getState, dispatch }
+  ) => {
+    await emitter.emit("importKeyring", { mnemonic, path, source, passphrase })
 
     const { keyrings, ui } = getState() as {
       keyrings: KeyringsState

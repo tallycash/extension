@@ -1,5 +1,7 @@
 export const HIDE_IMPORT_DERIVATION_PATH =
   process.env.HIDE_IMPORT_DERIVATION_PATH === "true"
+export const HIDE_IMPORT_PASSPHRASE =
+  process.env.HIDE_IMPORT_PASSPHRASE === "true"
 export const USE_MAINNET_FORK = process.env.USE_MAINNET_FORK === "true"
 export const HIDE_SWAP_REWARDS = process.env.HIDE_SWAP_REWARDS === "true"
 export const RESOLVE_RNS_NAMES = process.env.RESOLVE_RNS_NAMES === "true"

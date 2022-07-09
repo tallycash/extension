@@ -327,18 +327,22 @@ export default class KeyringService extends BaseService<Events> {
    * keyring for system use.
    *
    * @param mnemonic - a seed phrase
+   * @param source - original source of the key
+   * @param path - derivation path
+   * @param passphrase - optional passphrase [BIP39]
    * @returns The string ID of the new keyring.
    */
   async importKeyring(
     mnemonic: string,
     source: "import" | "internal",
-    path?: string
+    path?: string,
+    passphrase?: string
   ): Promise<string> {
     this.requireUnlocked()
 
     const newKeyring = path
-      ? new HDKeyring({ mnemonic, path })
-      : new HDKeyring({ mnemonic })
+      ? new HDKeyring({ mnemonic, path, passphrase })
+      : new HDKeyring({ mnemonic, passphrase })
 
     if (this.#keyrings.some((kr) => kr.id === newKeyring.id)) {
       return newKeyring.id
