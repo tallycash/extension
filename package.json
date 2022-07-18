@@ -9,8 +9,10 @@
   "license": "GPL-3.0",
   "jest": {
     "setupFiles": [
-      "jest-webextension-mock"
-    ]
+      "jest-webextension-mock",
+      "./setupJest.ts"
+    ],
+    "testEnvironment": "jsdom"
   },
   "keywords": [
     "ethereum",
