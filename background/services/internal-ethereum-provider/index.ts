@@ -6,6 +6,7 @@ import {
   EIP1193_ERROR_CODES,
   RPCRequest,
 } from "@tallyho/provider-bridge-shared"
+import { hexlify, toUtf8Bytes } from "ethers/lib/utils"
 import logger from "../../lib/logger"
 
 import BaseService from "../base"
@@ -29,7 +30,6 @@ import {
   SignDataRequest,
   parseSigningData,
 } from "../../utils/signing"
-import { hexToAscii } from "../../lib/utils"
 import { SUPPORT_POLYGON } from "../../features"
 import {
   ActiveNetwork,
@@ -365,8 +365,10 @@ export default class InternalEthereumProviderService extends BaseService<Events>
     },
     origin: string
   ) {
-    const asciiData = input.startsWith("0x") ? hexToAscii(input) : input
-    const { data, type } = parseSigningData(asciiData)
+    const hexInput = input.match(/^0x[0-9A-Fa-f]*$/)
+      ? input
+      : hexlify(toUtf8Bytes(input))
+    const { data, type } = parseSigningData(input)
     const activeNetwork = await this.getActiveOrDefaultNetwork(origin)
 
     return new Promise<string>((resolve, reject) => {
@@ -378,7 +380,7 @@ export default class InternalEthereumProviderService extends BaseService<Events>
           },
           signingData: data,
           messageType: type,
-          rawSigningData: asciiData,
+          rawSigningData: hexInput,
         },
         resolver: resolve,
         rejecter: reject,
