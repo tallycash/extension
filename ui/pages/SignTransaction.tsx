@@ -11,6 +11,7 @@ import {
   getAccountTotal,
   selectCurrentNetwork,
 } from "@tallyho/tally-background/redux-slices/selectors"
+import { USE_UPDATED_SIGNING_UI } from "@tallyho/tally-background/features"
 import { ReadOnlyAccountSigner } from "@tallyho/tally-background/services/signing"
 import {
   useBackgroundDispatch,
@@ -21,6 +22,7 @@ import SignTransactionContainer from "../components/SignTransaction/SignTransact
 import SignTransactionInfoProvider from "../components/SignTransaction/SignTransactionInfoProvider"
 import SignTransactionPanelSwitcher from "../components/SignTransaction/SignTransactionPanelSwitcher"
 import SignTransactionPanelCombined from "../components/SignTransaction/SignTransactionPanelCombined"
+import Signing from "../components/Signing"
 
 export default function SignTransaction(): ReactElement {
   const dispatch = useBackgroundDispatch()
@@ -46,6 +48,17 @@ export default function SignTransaction(): ReactElement {
   const accountSigner = signerAccountTotal?.accountSigner ?? null
 
   const isLocked = useIsSignerLocked(accountSigner)
+
+  if (accountSigner === null || transactionDetails === undefined) {
+    // FIXME throw?
+    return <></>
+  }
+
+  if (USE_UPDATED_SIGNING_UI) {
+    return (
+      <Signing accountSigner={accountSigner} request={transactionDetails} />
+    )
+  }
 
   if (isLocked) return <></>
 

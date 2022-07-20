@@ -10,6 +10,7 @@ import {
 } from "@tallyho/tally-background/redux-slices/signing"
 import { SignDataMessageType } from "@tallyho/tally-background/utils/signing"
 import { useHistory } from "react-router-dom"
+import { USE_UPDATED_SIGNING_UI } from "@tallyho/tally-background/features"
 import { ReadOnlyAccountSigner } from "@tallyho/tally-background/services/signing"
 import {
   useBackgroundDispatch,
@@ -18,6 +19,7 @@ import {
 } from "../hooks"
 import PersonalSignDetailPanel from "./PersonalSignDetailPanel"
 import SignTransactionContainer from "../components/SignTransaction/SignTransactionContainer"
+import Signing from "../components/Signing"
 
 const TITLE: Record<SignDataMessageType, string> = {
   [SignDataMessageType.EIP4361]: "Sign in with Ethereum",
@@ -44,6 +46,19 @@ export default function PersonalSignData(): ReactElement {
 
   const isLocked = useIsSignerLocked(currentAccountSigner)
   if (isLocked) return <></>
+
+  if (USE_UPDATED_SIGNING_UI) {
+    if (currentAccountSigner === null || signingDataRequest === undefined) {
+      return <></>
+    }
+
+    return (
+      <Signing
+        accountSigner={currentAccountSigner}
+        request={signingDataRequest}
+      />
+    )
+  }
 
   if (
     typeof signingDataRequest === "undefined" ||
