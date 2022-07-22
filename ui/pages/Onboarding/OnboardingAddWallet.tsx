@@ -29,6 +29,12 @@ const accountCreateButtonInfos = [
         url: "/onboarding/view-only-wallet",
         isAvailable: true,
       },
+      {
+        label: "Off-chain Account",
+        icon: "./images/add_wallet/bank.svg",
+        url: "/onboarding/off-chain-account",
+        isAvailable: true,
+      },
     ],
   },
   {

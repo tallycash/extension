@@ -17,11 +17,13 @@ import EarnDeposit from "../pages/EarnDeposit"
 import Menu from "../pages/Settings"
 import Send from "../pages/Send"
 import Swap from "../pages/Swap"
+import { Trade } from "../pages/Trade"
 import DAppPermissionRequest from "../pages/DAppConnectRequest"
 import KeyringUnlock from "../components/Keyring/KeyringUnlock"
 import KeyringSetPassword from "../components/Keyring/KeyringSetPassword"
 import Eligible from "../pages/Claiming/Eligible"
 import SettingsExportLogs from "../pages/Settings/SettingsExportLogs"
+import OnboardingOffChainAccount from "../pages/Onboarding/OnboardingOffChainAccount"
 
 interface PageList {
   path: string
@@ -66,6 +68,13 @@ const pageList: PageList[] = [
   {
     path: "/onboarding/view-only-wallet",
     Component: OnboardingViewOnlyWallet,
+    hasTabBar: false,
+    hasTopBar: false,
+    persistOnClose: false,
+  },
+  {
+    path: "/onboarding/off-chain-account",
+    Component: OnboardingOffChainAccount,
     hasTabBar: false,
     hasTopBar: false,
     persistOnClose: false,
@@ -150,6 +159,13 @@ const pageList: PageList[] = [
   {
     path: "/swap",
     Component: Swap,
+    hasTabBar: true,
+    hasTopBar: true,
+    persistOnClose: true,
+  },
+  {
+    path: "/trade",
+    Component: Trade,
     hasTabBar: true,
     hasTopBar: true,
     persistOnClose: true,

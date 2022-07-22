@@ -3,6 +3,7 @@ import { CompleteAssetAmount } from "@tallyho/tally-background/redux-slices/acco
 
 import DoggoAssetListItem from "./AssetListItem/DoggoAssetListItem"
 import CommonAssetListItem from "./AssetListItem/CommonAssetListItem"
+import OffChainAssetListItem from "./AssetListItem/OffChainAssetListItem"
 
 interface Props {
   assetAmount: CompleteAssetAmount
@@ -12,18 +13,27 @@ interface Props {
 export default function WalletAssetListItem(props: Props): ReactElement {
   const { assetAmount, initializationLoadingTimeExpired } = props
 
-  const isDoggoAsset = assetAmount.asset.symbol === "DOGGO"
+  let asset: ReactElement
 
-  return (
-    <li>
-      {isDoggoAsset ? (
-        <DoggoAssetListItem assetAmount={assetAmount} />
-      ) : (
+  switch (assetAmount.asset.symbol) {
+    case "DOGGO":
+      asset = <DoggoAssetListItem assetAmount={assetAmount} />
+      break
+    case "CAD":
+      asset = <OffChainAssetListItem assetAmount={assetAmount} />
+      break
+    default:
+      asset = (
         <CommonAssetListItem
           assetAmount={assetAmount}
           initializationLoadingTimeExpired={initializationLoadingTimeExpired}
         />
-      )}
+      )
+  }
+
+  return (
+    <li>
+      {asset}
       <style jsx global>
         {`
           .asset_icon {
@@ -44,6 +54,12 @@ export default function WalletAssetListItem(props: Props): ReactElement {
           mask-image: url("./images/earn_tab@2x.png");
           margin-left: 10px;
           margin-right: -5px;
+          }
+          .asset_icon_plus {
+          mask-image: url("./images/plus@2x.png");
+          mask-size: cover;
+          width: 15px;
+          height: 15px;
           }
           .asset_icon_gift {
           width: 22px;

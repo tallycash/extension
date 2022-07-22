@@ -1,4 +1,4 @@
-import { AnyAssetAmount } from "./assets"
+import { AnyAssetAmount, OffChainAsset } from "./assets"
 import { EVMNetwork } from "./networks"
 import { HexString } from "./types"
 
@@ -49,4 +49,38 @@ export type AddressOnNetwork = {
 export type NameOnNetwork = {
   name: string
   network: EVMNetwork
+}
+
+/**
+ * Credentials needed to authenticate with an off-chain provider.
+ */
+export type OffChainAccountCredentials = {
+  username: string
+  password: string
+  challengeResponse?: string
+}
+
+/**
+ * An off-chain provider represents a service that stores fiat and crypto assets
+ * off chain. Examples include centralized exchanges and banks.
+ */
+export type OffChainProvider = {
+  apiUrl: string
+  logoUrl: string
+  name: string
+}
+/**
+ * An account on an off-chain provider.
+ */
+export type OffChainAccount = {
+  userId: string
+  token: string
+}
+
+/**
+ * An account on an off-chain provider.
+ */
+export type OffChainChallenge = {
+  requestId: string
+  challengeMessage: string
 }

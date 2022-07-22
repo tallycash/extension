@@ -35,6 +35,7 @@ import CorePage from "../components/Core/CorePage"
 import ErrorFallback from "./ErrorFallback"
 
 import pageList from "../routes/routes"
+import { initializeAPIMocks } from "../services/MockService"
 
 const pagePreferences = Object.fromEntries(
   pageList.map(({ path, hasTabBar, hasTopBar, persistOnClose }) => [
@@ -122,6 +123,8 @@ export function Main(): ReactElement {
     keyringStatus !== "unlocked"
 
   useConnectPopupMonitor()
+
+  initializeAPIMocks()
 
   return (
     <>

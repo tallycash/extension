@@ -9,7 +9,7 @@ import classNames from "classnames"
 
 import { useOnClickOutside } from "../../hooks"
 
-export type Option = { value: string; label: string; hideActiveValue?: boolean }
+export type Option = { value: string; label: string | JSX.Element; hideActiveValue?: boolean }
 
 type Props = {
   options: Option[] | string[]
@@ -103,7 +103,7 @@ export default function SharedSelect(props: Props): ReactElement {
           <span>
             {showValue && activeIndex && !currentHideActiveValue
               ? `${currentLabel} - ${currentValue}`
-              : `${currentLabel}`}
+              : <>{currentLabel}</>}
           </span>
           <span className="icon" />
         </button>
