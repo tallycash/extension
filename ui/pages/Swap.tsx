@@ -338,6 +338,22 @@ export default function Swap(): ReactElement {
         network: selectedNetwork,
       }
 
+      if (
+        "buyAmount" in quoteRequest.amount &&
+        Number(quoteRequest.amount.buyAmount) === 0
+      ) {
+        setSellAmount("")
+        return
+      }
+
+      if (
+        "sellAmount" in quoteRequest.amount &&
+        Number(quoteRequest.amount.sellAmount) === 0
+      ) {
+        setBuyAmount("")
+        return
+      }
+
       // If there's a different quote in progress, reset all loading states as
       // we're about to replace it.
       if (latestQuoteRequest.current !== quoteRequest) {
@@ -352,6 +368,7 @@ export default function Swap(): ReactElement {
       }
 
       latestQuoteRequest.current = quoteRequest
+
       const { quote, needsApproval: quoteNeedsApproval } = ((await dispatch(
         fetchSwapPrice(quoteRequest)
       )) as unknown as AsyncThunkFulfillmentType<typeof fetchSwapPrice>) ?? {
@@ -600,7 +617,8 @@ export default function Swap(): ReactElement {
                       buyAmountLoading ||
                       !sellAsset ||
                       !sellAmount ||
-                      !buyAsset
+                      !buyAsset ||
+                      !buyAmount
                     }
                     onClick={getFinalQuote}
                     showLoadingOnClick={!confirmationMenu}
