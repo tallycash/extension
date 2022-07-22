@@ -703,21 +703,12 @@ export default class IndexingService extends BaseService<Events> {
     // no need to block here, as the first fetch blocks the entire service init
     this.fetchAndCacheTokenLists()
 
-    const assetsToTrack = await this.db.getAssetsToTrack()
-    // TODO doesn't support multi-network assets
-    // like USDC or CREATE2-based contracts on L1/L2
-    const activeAssetsToTrack = assetsToTrack.filter((asset) =>
-      this.chainService.supportedNetworks
-        .map((n) => n.chainID)
-        .includes(asset.homeNetwork.chainID)
-    )
-
     // wait on balances being written to the db, don't wait on event emission
     await Promise.allSettled(
       (
         await this.chainService.getAccountsToTrack()
       ).map(async (addressOnNetwork) => {
-        await this.retrieveTokenBalances(addressOnNetwork, activeAssetsToTrack)
+        await this.retrieveTokenBalances(addressOnNetwork)
         await this.chainService.getLatestBaseAccountBalance(addressOnNetwork)
       })
     )
