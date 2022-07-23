@@ -2,6 +2,7 @@ import { FiatCurrency, FungibleAsset, CoinGeckoAsset } from "../assets"
 import { NetworkBaseAsset } from "../networks"
 import { coinTypesByAssetSymbol } from "./coin-types"
 import { SUPPORT_POLYGON } from "../features"
+import { SUPPORT_TELOS } from "../features"
 
 export const USD: FiatCurrency = {
   name: "United States Dollar",
@@ -36,6 +37,18 @@ export const ETH: FungibleAsset & CoinGeckoAsset & NetworkBaseAsset = {
   },
 }
 
+export const TLOS: FungibleAsset & CoinGeckoAsset & NetworkBaseAsset = {
+  name: "Telos",
+  symbol: "TLOS",
+  decimals: 18,
+  coinType: coinTypesByAssetSymbol.TLOS,
+  metadata: {
+    coinGeckoID: "telos",
+    tokenLists: [],
+    websiteURL: "https://www.telos.net/",
+  },
+}
+
 export const MATIC: FungibleAsset & CoinGeckoAsset & NetworkBaseAsset = {
   name: "Matic Token",
   symbol: "MATIC",
@@ -61,6 +74,8 @@ export const BTC: FungibleAsset & CoinGeckoAsset & NetworkBaseAsset = {
     websiteURL: "https://bitcoin.org",
   },
 }
+
+
 
 export const BASE_ASSETS = [ETH, BTC, ...(SUPPORT_POLYGON ? [MATIC] : [])]
 

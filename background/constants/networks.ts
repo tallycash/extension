@@ -8,6 +8,13 @@ export const ETHEREUM: EVMNetwork = {
   family: "EVM",
 }
 
+export const TELOS: EVMNetwork = {
+  name: "Telos",
+  baseAsset: TLOS,
+  chainID: "40",
+  family: "EVM",
+}
+
 export const POLYGON: EVMNetwork = {
   name: "Polygon",
   baseAsset: MATIC,

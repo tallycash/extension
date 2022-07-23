@@ -10,6 +10,7 @@ export const coinTypesByAssetSymbol = {
   ETH: 60,
   RBTC: 137,
   MATIC: 966,
+  TLOS: 994, //Waiting for Slip.44 to review PR
 } as const
 
 /**
