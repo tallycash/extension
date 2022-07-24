@@ -11,7 +11,6 @@ import {
 import { ESTIMATED_FEE_MULTIPLIERS } from "@tallyho/tally-background/constants/network-fees"
 import React, { ReactElement, useCallback, useEffect, useState } from "react"
 import { weiToGwei } from "@tallyho/tally-background/lib/utils"
-import { ETH } from "@tallyho/tally-background/constants"
 import { PricePoint } from "@tallyho/tally-background/assets"
 import { enrichAssetAmountWithMainCurrencyValues } from "@tallyho/tally-background/redux-slices/utils/asset-utils"
 import { SharedTypedInput } from "../Shared/SharedInput"
@@ -52,12 +51,14 @@ const gasOptionFromEstimate = (
     99: NetworkFeeTypeChosen.Instant,
   }
 
+  const [asset] = mainCurrencyPricePoint?.pair || []
+
   const feeAssetAmount =
-    typeof gasLimit !== "undefined"
+    typeof gasLimit !== "undefined" && typeof asset !== "undefined"
       ? enrichAssetAmountWithMainCurrencyValues(
           {
-            asset: ETH,
-            amount: (maxFeePerGas + maxPriorityFeePerGas) * gasLimit,
+            asset,
+            amount: (baseFeePerGas + maxPriorityFeePerGas) * gasLimit,
           },
           mainCurrencyPricePoint,
           2
@@ -69,7 +70,9 @@ const gasOptionFromEstimate = (
     confidence: `${confidence}`,
     type: feeOptionData[confidence],
     estimatedGwei: weiToGwei(
-      (baseFeePerGas * ESTIMATED_FEE_MULTIPLIERS[confidence]) / 10n
+      ((baseFeePerGas + maxPriorityFeePerGas) *
+        ESTIMATED_FEE_MULTIPLIERS[confidence]) /
+        10n
     ).split(".")[0],
     maxGwei: weiToGwei(maxFeePerGas).split(".")[0],
     dollarValue: dollarValue ? `$${dollarValue}` : "-",

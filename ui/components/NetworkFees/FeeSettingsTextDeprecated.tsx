@@ -17,11 +17,9 @@ import { useBackgroundSelector } from "../../hooks"
 
 const getFeeDollarValue = (
   currencyPrice: PricePoint | undefined,
-  networkSettings: NetworkFeeSettings
+  networkSettings: NetworkFeeSettings,
+  estimatedSpendPerGas: bigint
 ): string | undefined => {
-  const {
-    values: { maxFeePerGas, maxPriorityFeePerGas },
-  } = networkSettings
   const gasLimit = networkSettings.gasLimit ?? networkSettings.suggestedGasLimit
 
   if (!gasLimit || !currencyPrice) return undefined
@@ -31,7 +29,7 @@ const getFeeDollarValue = (
     enrichAssetAmountWithMainCurrencyValues(
       {
         asset,
-        amount: (maxFeePerGas + maxPriorityFeePerGas) * gasLimit,
+        amount: estimatedSpendPerGas * gasLimit,
       },
       currencyPrice,
       2
@@ -49,12 +47,15 @@ export default function FeeSettingsTextDeprecated(): ReactElement {
   )
   const baseFeePerGas = estimatedFeesPerGas?.baseFeePerGas
 
+  const estimatedSpendPerGas =
+    (baseFeePerGas ?? 0n) + networkSettings.values.maxPriorityFeePerGas
+
   const estimatedGweiAmount =
     typeof estimatedFeesPerGas !== "undefined" &&
     typeof selectedFeeType !== "undefined"
       ? truncateDecimalAmount(
           weiToGwei(
-            ((baseFeePerGas ?? 0n) *
+            (estimatedSpendPerGas *
               ESTIMATED_FEE_MULTIPLIERS_BY_TYPE[selectedFeeType]) /
               10n
           ),
@@ -65,7 +66,11 @@ export default function FeeSettingsTextDeprecated(): ReactElement {
   if (typeof estimatedFeesPerGas === "undefined") return <div>Unknown</div>
 
   const gweiValue = `${estimatedGweiAmount} Gwei`
-  const dollarValue = getFeeDollarValue(mainCurrencyPricePoint, networkSettings)
+  const dollarValue = getFeeDollarValue(
+    mainCurrencyPricePoint,
+    networkSettings,
+    estimatedSpendPerGas
+  )
 
   if (!dollarValue) return <div>~{gweiValue}</div>
 
