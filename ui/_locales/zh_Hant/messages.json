@@ -1,0 +1,85 @@
+{
+  "assetInput": {
+    "error": {
+      "insufficientBalance": "餘額不足",
+      "invalidAmount": "數目的格式錯誤"
+    },
+    "search": "透過名稱或地址搜尋",
+    "selectToken": "選擇代幣"
+  },
+  "overview": {
+    "addresses": "地址",
+    "assets": "資產",
+    "networks": "網路",
+    "tableHeader": {
+      "asset": "資產",
+      "balance": "帳戶總額",
+      "price": "價格"
+    },
+    "totalBalance": "帳戶總額"
+  },
+  "passwordStrength": {
+    "average": "普通",
+    "hintDesc": "要產生一個高強度的密碼，可以試著混合大小寫、符號與數字。密碼長度應該超過 8 個字元。",
+    "strength": "強度",
+    "strong": "強",
+    "weak": "弱"
+  },
+  "popupEdition": "社群版",
+  "protocol": {
+    "compatibleChain": "以太坊相容區塊鏈",
+    "connected": "已連線",
+    "l2": "L2 擴展方案",
+    "mainnet": "以太坊主網"
+  },
+  "readOnlyNotice": "唯讀模式",
+  "settings": {
+    "bugReport": "問題回報",
+    "exportLogs": {
+      "discordBtn": "加入 Discord",
+      "discordDesc": "參觀我們的 Discord 頻道，在那兒回報你的問題。請在問題中附加 log 紀錄。",
+      "discordTitle": "1. 加入 Discord 中的 #bug-reports 頻道",
+      "logBtn": "匯出紀錄",
+      "logDesc": "為了更好理解你的問題，請匯出你的 log 紀錄。",
+      "logTitle": "2. 匯出紀錄",
+      "title": "問題回報"
+    },
+    "hideSmallAssetBalance": "隱藏小於 {{sign}}{{amount}} 的資產",
+    "joinBtn": "加入我們的 Discord 並給予反饋",
+    "joinDesc": "加入我們的 Discord 並給予反饋!",
+    "joinTitle": "加入我們的社群",
+    "mainMenu": "設定",
+    "setAsDefault": "將 Tally Ho 設為你的預設錢包"
+  },
+  "swap": {
+    "error": {
+      "noApprovalTarget": "嘗試允許傳輸但尚未指定一個已獲准目標。",
+      "noSellAsset": "嘗試允許傳輸但尚未指定售出資產。",
+      "nonContractAsset": "嘗試允許傳輸一項非合約資產。"
+    },
+    "from": "支付：",
+    "getFinalQuote": "取得最終摘要",
+    "title": "轉換資產",
+    "to": "收到：",
+    "transactionSettings": {
+      "daoFee": "DAO 費用",
+      "estimatedFee": "預估的網路費用",
+      "settings": "交易設定",
+      "slippageTolerance": "允許的滑點",
+      "title": "交易設定"
+    }
+  },
+  "wallet": {
+    "assetAmount": "資產 / 數目",
+    "estimatedFee": "預估的網路費用",
+    "receive": "接收",
+    "receiveAddress": "接收地址",
+    "receiveAddressDesc": "只傳送以太坊主網相容資產到此地址。",
+    "secureSeed": "請先將您的回復種子存放到安全的地方",
+    "send": "傳送",
+    "sendAsset": "傳送資產",
+    "sendButton": "繼續",
+    "sendTo": "傳送到",
+    "totalAccountBalance": "帳戶總額"
+  }
+}
